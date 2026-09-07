@@ -24,7 +24,7 @@ export type UserModelCatalog = {
 
 export function defaultCatalogPath(): string {
   const configHome = process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config");
-  return process.env.AGENT_BRIDGE_CONFIG_PATH ?? join(configHome, "agent-bridge", "config.json");
+  return process.env.HARNESS_RELAY_CONFIG_PATH ?? join(configHome, "harness-relay", "config.json");
 }
 
 function object(value: unknown): Record<string, unknown> | undefined {

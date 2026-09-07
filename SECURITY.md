@@ -47,9 +47,9 @@ Usually out of scope: reports without a concrete impact path, vulnerabilities in
 third-party dependencies used as documented, and problems that require an
 already-compromised machine or a deliberately corrupted local state.
 
-### What agent-bridge defends
+### What harness-relay defends
 
-`agent-bridge` supervises harness processes with the caller's own permissions;
+`harness-relay` supervises harness processes with the caller's own permissions;
 it is not a sandbox around them. The "Process and security boundary invariants"
 in [CONTEXT.md](CONTEXT.md) describe that boundary. A report is in scope when it
 breaks one of them, for example:

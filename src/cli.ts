@@ -14,27 +14,27 @@ import { brokerPaths } from "./paths.js";
 import { messageFrom } from "./util.js";
 import { PACKAGE_VERSION } from "./version.js";
 
-const HELP = `agent-bridge — local harness delegation gateway
+const HELP = `harness-relay — local harness delegation gateway
 
 Usage:
-  agent-bridge describe [--json]
-  agent-bridge routes [--refresh] [--json]
-  agent-bridge start --provider <id> --model <id> --text <text> [options]
-  agent-bridge run --provider <id> --model <id> [options] [prompt]
-  agent-bridge list [--active] [--correlation <id>] [--json]
-  agent-bridge inspect <invocation-id> [--json]
-  agent-bridge get <invocation-id> [--json]
-  agent-bridge result <invocation-id> [--json]
-  agent-bridge wait <invocation-id> [--timeout-ms <milliseconds>] [--json]
-  agent-bridge events <invocation-id> [--after <cursor>] [--follow] [--json]
-  agent-bridge cancel <invocation-id> [--json]
-  agent-bridge request <operation> [--params <json>] [--json]
-  agent-bridge broker serve [configuration flags]
-  agent-bridge broker status [--json]
-  agent-bridge broker logs [--follow] [--json]
-  agent-bridge broker restart [--force] [--json]
-  agent-bridge broker stop [--force] [--json]
-  agent-bridge mcp serve
+  harness-relay describe [--json]
+  harness-relay routes [--refresh] [--json]
+  harness-relay start --provider <id> --model <id> --text <text> [options]
+  harness-relay run --provider <id> --model <id> [options] [prompt]
+  harness-relay list [--active] [--correlation <id>] [--json]
+  harness-relay inspect <invocation-id> [--json]
+  harness-relay get <invocation-id> [--json]
+  harness-relay result <invocation-id> [--json]
+  harness-relay wait <invocation-id> [--timeout-ms <milliseconds>] [--json]
+  harness-relay events <invocation-id> [--after <cursor>] [--follow] [--json]
+  harness-relay cancel <invocation-id> [--json]
+  harness-relay request <operation> [--params <json>] [--json]
+  harness-relay broker serve [configuration flags]
+  harness-relay broker status [--json]
+  harness-relay broker logs [--follow] [--json]
+  harness-relay broker restart [--force] [--json]
+  harness-relay broker stop [--force] [--json]
+  harness-relay mcp serve
 
 Start options:
   --effort <level>              Requested effort level
@@ -64,9 +64,9 @@ Broker configuration flags:
   --termination-grace-ms <n>     Grace period before force-killing a process
 
 Environment:
-  AGENT_BRIDGE_RUNTIME_DIR      Override the user runtime directory
-  AGENT_BRIDGE_STATE_DIR        Override the persisted state directory
-  AGENT_BRIDGE_SOCKET_PATH      Override the Unix socket path
+  HARNESS_RELAY_RUNTIME_DIR     Override the user runtime directory
+  HARNESS_RELAY_STATE_DIR       Override the persisted state directory
+  HARNESS_RELAY_SOCKET_PATH     Override the Unix socket path
 `;
 
 type ParsedArguments = {
@@ -513,8 +513,8 @@ async function startBroker(configOverrides: Partial<BrokerConfigValues> = {}): P
       logFile,
     );
     await server.start();
-    if (process.env.AGENT_BRIDGE_DAEMON !== "1") {
-      process.stderr.write(`agent-bridge broker listening at ${paths.socketPath}\n`);
+    if (process.env.HARNESS_RELAY_DAEMON !== "1") {
+      process.stderr.write(`harness-relay broker listening at ${paths.socketPath}\n`);
     }
     const signal = new Promise<void>((resolve) => {
       process.once("SIGINT", resolve);
@@ -912,7 +912,7 @@ try {
   if (wantsJson) {
     process.stderr.write(`${JSON.stringify({ ok: false, error: detail })}\n`);
   } else {
-    process.stderr.write(`agent-bridge: ${detail.message} (${detail.code})\n`);
+    process.stderr.write(`harness-relay: ${detail.message} (${detail.code})\n`);
   }
   process.exitCode = exitCode(detail.code);
 }

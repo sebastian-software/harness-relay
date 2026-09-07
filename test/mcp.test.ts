@@ -54,13 +54,13 @@ test("MCP initialize and tools/list expose the bridge contract", async () => {
       outputSchema?: Record<string, unknown>;
     }>;
   };
-  assert.ok(tools.tools.some((tool) => tool.name === "agent_bridge_invocation_start"));
-  assert.ok(tools.tools.some((tool) => tool.name === "agent_bridge_invocation_events"));
+  assert.ok(tools.tools.some((tool) => tool.name === "harness_relay_invocation_start"));
+  assert.ok(tools.tools.some((tool) => tool.name === "harness_relay_invocation_events"));
   assert.equal(
-    tools.tools.some((tool) => tool.name === "agent_bridge_invocation_send"),
+    tools.tools.some((tool) => tool.name === "harness_relay_invocation_send"),
     false,
   );
-  const startTool = tools.tools.find((tool) => tool.name === "agent_bridge_invocation_start");
+  const startTool = tools.tools.find((tool) => tool.name === "harness_relay_invocation_start");
   assert.ok(startTool?.inputSchema?.properties);
   assert.ok(startTool?.outputSchema);
 });
@@ -81,7 +81,7 @@ test("MCP tools/call returns structured broker results and errors", async () => 
         id: "ok",
         method: "tools/call",
         params: {
-          name: "agent_bridge_invocation_start",
+          name: "harness_relay_invocation_start",
           arguments: { workingDirectory: "/tmp" },
         },
       }),
@@ -101,7 +101,7 @@ test("MCP tools/call returns structured broker results and errors", async () => 
         id: "error",
         method: "tools/call",
         params: {
-          name: "agent_bridge_invocation_events",
+          name: "harness_relay_invocation_events",
           arguments: {},
         },
       }),
@@ -119,17 +119,17 @@ test("MCP notifications do not produce stdout responses", async () => {
 });
 
 test("MCP serves the broker contract to the official stdio client", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-mcp-integration-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-mcp-integration-"));
   const env = Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => entry[1] !== undefined,
     ),
   );
   Object.assign(env, {
-    AGENT_BRIDGE_RUNTIME_DIR: join(root, "run"),
-    AGENT_BRIDGE_STATE_DIR: join(root, "state"),
-    AGENT_BRIDGE_SOCKET_PATH: join(root, "run", "broker.sock"),
-    AGENT_BRIDGE_FAKE_HARNESS_PATH: join(process.cwd(), "scripts", "fake-harness.mjs"),
+    HARNESS_RELAY_RUNTIME_DIR: join(root, "run"),
+    HARNESS_RELAY_STATE_DIR: join(root, "state"),
+    HARNESS_RELAY_SOCKET_PATH: join(root, "run", "broker.sock"),
+    HARNESS_RELAY_FAKE_HARNESS_PATH: join(process.cwd(), "scripts", "fake-harness.mjs"),
   });
   const transport = new StdioClientTransport({
     command: process.execPath,
@@ -138,15 +138,15 @@ test("MCP serves the broker contract to the official stdio client", async () => 
     env,
     stderr: "pipe",
   });
-  const client = new Client({ name: "agent-bridge-integration-test", version: "1.0.0" });
+  const client = new Client({ name: "harness-relay-integration-test", version: "1.0.0" });
   try {
     await client.connect(transport);
     const listed = await client.listTools();
     const requiredTools = [
-      "agent_bridge_system_describe",
-      "agent_bridge_invocation_start",
-      "agent_bridge_invocation_events",
-      "agent_bridge_invocation_result",
+      "harness_relay_system_describe",
+      "harness_relay_invocation_start",
+      "harness_relay_invocation_events",
+      "harness_relay_invocation_result",
     ];
     for (const name of requiredTools) {
       const tool = listed.tools.find((candidate) => candidate.name === name);
@@ -155,16 +155,16 @@ test("MCP serves the broker contract to the official stdio client", async () => 
     }
 
     const described = await client.callTool({
-      name: "agent_bridge_system_describe",
+      name: "harness_relay_system_describe",
       arguments: {},
     });
     assert.ok(described.structuredContent);
 
     const started = await client.callTool({
-      name: "agent_bridge_invocation_start",
+      name: "harness_relay_invocation_start",
       arguments: {
         selector: {
-          provider: "agent-bridge",
+          provider: "harness-relay",
           model: "fake-echo",
           via: "fake",
           requiredCapabilities: ["core.input.text"],
@@ -180,19 +180,19 @@ test("MCP serves the broker contract to the official stdio client", async () => 
     const invocationId = startedContent.invocationId;
 
     const events = await client.callTool({
-      name: "agent_bridge_invocation_events",
+      name: "harness_relay_invocation_events",
       arguments: { invocationId },
     });
     assert.ok(events.structuredContent);
 
     const waited = await client.callTool({
-      name: "agent_bridge_invocation_wait",
+      name: "harness_relay_invocation_wait",
       arguments: { invocationId, timeoutMs: 30_000 },
     });
     assert.ok(waited.structuredContent);
 
     const result = await client.callTool({
-      name: "agent_bridge_invocation_result",
+      name: "harness_relay_invocation_result",
       arguments: { invocationId },
     });
     assert.ok(result.structuredContent);

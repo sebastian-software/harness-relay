@@ -1,4 +1,4 @@
-# agent-bridge
+# harness-relay
 
 **Local harness-to-harness delegation gateway.**
 
@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](package.json)
 
-`agent-bridge` is a local, model-first delegation gateway. It lets an
+`harness-relay` is a local, model-first delegation gateway. It lets an
 orchestrating agent delegate one bounded invocation to an installed harness,
 observe progress, and regain control with a normalized outcome. It is not a
 workflow orchestrator, sandbox, source-control manager, or credential store.
@@ -17,9 +17,9 @@ The package requires Node.js 22 or newer and currently supports macOS and
 Linux. Windows support is not claimed yet.
 
 ```sh
-pnpm add --global @sebastian-software/agent-bridge
+pnpm add --global harness-relay
 # or
-npx @sebastian-software/agent-bridge routes
+npx harness-relay routes
 ```
 
 ## First delegation
@@ -27,8 +27,8 @@ npx @sebastian-software/agent-bridge routes
 Discover qualified local routes before starting work:
 
 ```sh
-agent-bridge routes
-agent-bridge run --provider anthropic --model opus --interaction deny \
+harness-relay routes
+harness-relay run --provider anthropic --model opus --interaction deny \
   "Summarize the repository changes in this working directory."
 ```
 
@@ -41,7 +41,7 @@ supports `deny` and `unattended`, while the Claude route supports all three.
 The deterministic fake routes are useful for local tests:
 
 ```sh
-agent-bridge run --provider agent-bridge --model fake-echo --via fake \
+harness-relay run --provider harness-relay --model fake-echo --via fake \
   --cwd "$PWD" "hello from a fixture"
 ```
 
@@ -49,14 +49,14 @@ agent-bridge run --provider agent-bridge --model fake-echo --via fake \
 
 The first client autostarts one user-owned broker. The broker supervises the
 selected harness process, persists ordered events, and records a terminal
-outcome. The default socket is `$XDG_RUNTIME_DIR/agent-bridge/broker.sock` when
+outcome. The default socket is `$XDG_RUNTIME_DIR/harness-relay/broker.sock` when
 that variable is set; clients also read the legacy
 `$XDG_RUNTIME_DIR/broker.sock`, a migration path that the first release after
 0.1.0 removes
 ([#127](https://github.com/sebastian-software/agent-bridge/issues/127)).
 Otherwise a private platform-temporary directory is used; state lives in
-`~/.local/state/agent-bridge`. Override them with `AGENT_BRIDGE_RUNTIME_DIR`,
-`AGENT_BRIDGE_STATE_DIR`, or `AGENT_BRIDGE_SOCKET_PATH`.
+`~/.local/state/harness-relay`. Override them with `HARNESS_RELAY_RUNTIME_DIR`,
+`HARNESS_RELAY_STATE_DIR`, or `HARNESS_RELAY_SOCKET_PATH`.
 
 An outcome separates returned `content`, `artifacts`, observed workspace
 `effects`, effect-observation completeness, usage, runtime identity evidence,
@@ -68,11 +68,11 @@ they are not isolation, attribution proof, rollback, or a commit.
 For a shell or generic JSON client, use the same stable sequence:
 
 ```sh
-agent-bridge describe --json
-agent-bridge start --provider agent-bridge --model fake-echo --via fake \
+harness-relay describe --json
+harness-relay start --provider harness-relay --model fake-echo --via fake \
   --cwd "$PWD" --text "hello" --json
-agent-bridge events <invocation-id> --follow --json
-agent-bridge result <invocation-id> --json
+harness-relay events <invocation-id> --follow --json
+harness-relay result <invocation-id> --json
 ```
 
 Typed TypeScript callers can use `createClient()` from the package entry point.
@@ -105,9 +105,9 @@ see the `epic` label for grouped work.
 
 ## From the same workshop
 
-`agent-bridge` and [dalo](https://github.com/sebastian-software/dalo) are two
+`harness-relay` and [dalo](https://github.com/sebastian-software/dalo) are two
 halves of one story. Dalo distributes the skills an agent runs: one approved,
-versioned set delivered to every agent folder. `agent-bridge` handles the other
+versioned set delivered to every agent folder. `harness-relay` handles the other
 direction, delegating one bounded invocation to another installed harness and
 returning a normalized outcome. Skills in, delegation out.
 

@@ -170,7 +170,7 @@ export class CodexAdapter extends ProcessAdapter {
 
   constructor(options?: { readonly executable?: string; readonly probe?: DiscoveryProbe }) {
     super();
-    this.#executable = options?.executable ?? process.env.AGENT_BRIDGE_CODEX_PATH;
+    this.#executable = options?.executable ?? process.env.HARNESS_RELAY_CODEX_PATH;
     this.#probe = options?.probe;
   }
 

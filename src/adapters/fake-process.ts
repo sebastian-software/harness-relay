@@ -27,7 +27,7 @@ const SCENARIOS = [
 function route(model: string): RouteDescriptor {
   return {
     routeId: `fake-process:${model}`,
-    provider: "agent-bridge",
+    provider: "harness-relay",
     model,
     efforts: ["high"],
     via: "fake-process",
@@ -82,7 +82,7 @@ export class FakeProcessAdapter extends ProcessAdapter {
 
   protected command(context: AdapterRunContext): CommandSpec {
     const harness =
-      process.env.AGENT_BRIDGE_FAKE_HARNESS_PATH ??
+      process.env.HARNESS_RELAY_FAKE_HARNESS_PATH ??
       join(process.cwd(), "scripts", "fake-harness.mjs");
     if (context.route.model === "exit-before-read") {
       return {
@@ -117,7 +117,7 @@ export class FakeProcessAdapter extends ProcessAdapter {
   ): AdapterEvent | undefined {
     const type = typeof value.type === "string" ? value.type : "unknown";
     if (
-      value.provider === "agent-bridge" ||
+      value.provider === "harness-relay" ||
       value.model !== undefined ||
       value.harnessVersion !== undefined
     ) {

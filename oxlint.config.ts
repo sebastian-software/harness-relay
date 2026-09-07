@@ -17,7 +17,7 @@ for (const override of config.overrides ?? []) {
   }
 }
 
-// agent-bridge was linted with Biome's recommended set before it adopted the
+// harness-relay was linted with Biome's recommended set before it adopted the
 // org standards. The rules below fire throughout the existing, reviewed
 // implementation; they are parked here so the gate reports real regressions
 // today. Re-enabling them one by one, with the refactors they ask for, is

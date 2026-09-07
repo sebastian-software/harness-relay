@@ -5,22 +5,22 @@ import { brokerPaths } from "../src/paths.js";
 
 test("scopes the default XDG socket and exposes the legacy migration path", () => {
   assert.deepEqual(
-    brokerPaths({ XDG_RUNTIME_DIR: "/tmp/agent-bridge-runtime", XDG_STATE_HOME: "/tmp/state" }),
+    brokerPaths({ XDG_RUNTIME_DIR: "/tmp/harness-relay-runtime", XDG_STATE_HOME: "/tmp/state" }),
     {
-      runtimeDirectory: "/tmp/agent-bridge-runtime/agent-bridge",
-      stateDirectory: "/tmp/state/agent-bridge",
-      socketPath: "/tmp/agent-bridge-runtime/agent-bridge/broker.sock",
-      legacySocketPath: "/tmp/agent-bridge-runtime/broker.sock",
-      stateFile: "/tmp/state/agent-bridge/state.json",
+      runtimeDirectory: "/tmp/harness-relay-runtime/harness-relay",
+      stateDirectory: "/tmp/state/harness-relay",
+      socketPath: "/tmp/harness-relay-runtime/harness-relay/broker.sock",
+      legacySocketPath: "/tmp/harness-relay-runtime/broker.sock",
+      stateFile: "/tmp/state/harness-relay/state.json",
     },
   );
 });
 
 test("explicit runtime and socket overrides do not invent a legacy path", () => {
   const paths = brokerPaths({
-    AGENT_BRIDGE_RUNTIME_DIR: "/tmp/custom-runtime",
-    AGENT_BRIDGE_SOCKET_PATH: "/tmp/custom.sock",
-    XDG_RUNTIME_DIR: "/tmp/agent-bridge-runtime",
+    HARNESS_RELAY_RUNTIME_DIR: "/tmp/custom-runtime",
+    HARNESS_RELAY_SOCKET_PATH: "/tmp/custom.sock",
+    XDG_RUNTIME_DIR: "/tmp/harness-relay-runtime",
   });
   assert.equal(paths.runtimeDirectory, "/tmp/custom-runtime");
   assert.equal(paths.socketPath, "/tmp/custom.sock");

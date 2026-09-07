@@ -1,14 +1,21 @@
-# Agent Bridge domain context
+# Harness Relay domain context
 
 ## Purpose
 
-`agent-bridge` is a public, local harness-to-harness delegation gateway. It lets
-an orchestrating harness delegate one bounded invocation to another installed
-harness or capability provider and regain control with a normalized outcome.
-It does not become the caller's workflow orchestrator.
+`harness-relay` is a public, local harness-to-harness delegation gateway. It
+lets an orchestrating harness delegate one bounded invocation to another
+installed harness or capability provider and regain control with a normalized
+outcome. It does not become the caller's workflow orchestrator.
 
 ## Glossary
 
+- **Harness Relay (`harness-relay`):** This project: the npm package, the
+  `harness-relay` executable, the local broker it starts, its MCP projection,
+  and its typed client. The rename and its one-time migration are recorded in
+  [ADR-0021](docs/adr/0021-rename-the-tool-to-harness-relay.md); the decision
+  records numbered 0001 to 0020 keep the previous name in their text and mean
+  the same tool. The vocabulary below still calls the component "the bridge",
+  because bridging two harnesses is what it does.
 - **Caller:** The human, CI job, IDE, agent host, or other component that invokes
   a bridge operation.
 - **Root:** The caller-owned component that controls workflow order, combines

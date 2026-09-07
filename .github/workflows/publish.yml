@@ -8,8 +8,10 @@
 # version that already exists.
 #
 # Publishing uses npm Trusted Publishing (OIDC). It needs `id-token: write` and
-# no NPM_TOKEN; the token must be configured for
-# @sebastian-software/agent-bridge on npmjs.com before the first release.
+# no NPM_TOKEN. One owner action is required before the first release:
+# configure Trusted Publishing for the `harness-relay` package on npmjs.com,
+# bound to this repository, this workflow file and the `npm-release`
+# environment.
 
 name: publish
 

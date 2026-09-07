@@ -41,7 +41,7 @@ if (
 } else {
   emit({
     type: "init",
-    provider: "agent-bridge",
+    provider: "harness-relay",
     model: scenario === "identity-absent" ? undefined : model,
     harnessVersion: "1.0.0",
   });

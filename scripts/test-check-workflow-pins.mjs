@@ -79,7 +79,7 @@ const cases = [
   },
 ];
 
-const root = await mkdtemp(join(tmpdir(), "agent-bridge-pin-check-"));
+const root = await mkdtemp(join(tmpdir(), "harness-relay-pin-check-"));
 try {
   for (const testCase of cases) {
     const directory = await mkdtemp(join(root, "workflows-"));

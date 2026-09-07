@@ -22,7 +22,7 @@ function paths(root: string): BrokerPaths {
 }
 
 test("typed client follows and runs an invocation through the broker", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-client-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-client-"));
   const brokerPaths = paths(root);
   const broker = new Broker(brokerPaths);
   await broker.initialize();
@@ -32,7 +32,7 @@ test("typed client follows and runs an invocation through the broker", async () 
   try {
     const result = await client.run({
       selector: {
-        provider: "agent-bridge",
+        provider: "harness-relay",
         model: "fake-echo",
         via: "fake",
         requiredCapabilities: [],
@@ -51,7 +51,7 @@ test("typed client follows and runs an invocation through the broker", async () 
 });
 
 test("typed client checks broker version once per client instance", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-client-cache-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-client-cache-"));
   const socketPath = join(root, "broker.sock");
   const requests: string[] = [];
   const server = createServer((socket) => {

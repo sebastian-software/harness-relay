@@ -105,6 +105,33 @@ class StdinProcessAdapter extends ProcessAdapter {
   }
 }
 
+class EnvironmentEchoProcessAdapter extends ProcessAdapter {
+  readonly id = "environment-echo-process";
+
+  async discover(): Promise<readonly RouteDescriptor[]> {
+    return [];
+  }
+
+  protected command(): CommandSpec {
+    return {
+      executable: process.execPath,
+      args: [
+        "-e",
+        "console.log(JSON.stringify({type:'assistant',seen:Object.keys(process.env).filter(key => key.startsWith('HARNESS_RELAY_') || key.startsWith('AGENT_BRIDGE_')).sort(),control:process.env.CONTROL_MARKER ?? null}))",
+      ],
+    };
+  }
+
+  protected normalizeNative(
+    value: Record<string, JsonValue>,
+    state: { identity: ObservedIdentity; content: { add: (text: string) => void } },
+  ): AdapterEvent {
+    const seen = Array.isArray(value.seen) ? value.seen.join(",") : "";
+    state.content.add(seen);
+    return { category: "output", content: [{ type: "text", text: seen }], native: value };
+  }
+}
+
 class InteractiveProcessAdapter extends ProcessAdapter {
   readonly id = "interactive-process";
 
@@ -309,6 +336,37 @@ test("process adapter sends prompt on stdin and filters denied environment varia
   assert.equal(started?.native, undefined);
   assert.deepEqual(started?.data?.deniedEnvironment, ["TEST_DENIED"]);
   assert.equal(events.at(-1)?.native?.env, null);
+});
+
+test("process adapter keeps bridge-internal variables, including stale ones, out of the harness", async () => {
+  const adapter = new EnvironmentEchoProcessAdapter();
+  const events: AdapterEvent[] = [];
+  // AGENT_BRIDGE_* is the pre-rename prefix. A shell or CI job that has not
+  // finished the ADR-0021 migration still exports it, and it must not reach a
+  // harness process either.
+  process.env.HARNESS_RELAY_DIAGNOSTIC_MODE = "true";
+  process.env.AGENT_BRIDGE_DIAGNOSTIC_MODE = "true";
+  process.env.CONTROL_MARKER = "inherited";
+  try {
+    await adapter.run({
+      invocationId: "inv_environment",
+      request: request(process.cwd()),
+      route: route(adapter.id, process.execPath),
+      signal: new AbortController().signal,
+      async emit(event) {
+        events.push(event);
+      },
+    });
+  } finally {
+    delete process.env.HARNESS_RELAY_DIAGNOSTIC_MODE;
+    delete process.env.AGENT_BRIDGE_DIAGNOSTIC_MODE;
+    delete process.env.CONTROL_MARKER;
+  }
+  const output = events.find((event) => event.category === "output");
+  assert.deepEqual(output?.native?.seen, []);
+  // The rest of the environment is still inherited, so the empty list above
+  // means "filtered", not "no environment was passed".
+  assert.equal(output?.native?.control, "inherited");
 });
 
 test("process adapter completes a bidirectional permission exchange", async () => {

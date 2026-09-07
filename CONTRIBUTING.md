@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for taking the time. `agent-bridge` exposes a versioned contract, so
+Thank you for taking the time. `harness-relay` exposes a versioned contract, so
 most changes touch a test, a document, or a decision record next to the code.
 Please read [`CONTEXT.md`](CONTEXT.md) first: purpose, glossary, and the
 resolved invariants are normative, and a change that contradicts one of them
@@ -62,7 +62,7 @@ and `fake-fail`. It qualifies every interaction strategy, so the default
 `orchestrator` works:
 
 ```sh
-agent-bridge run --provider agent-bridge --model fake-echo --via fake \
+harness-relay run --provider harness-relay --model fake-echo --via fake \
   --cwd "$PWD" "hello from a fixture"
 ```
 
@@ -75,7 +75,7 @@ and `unattended` only, so pass `--interaction`; the CLI otherwise defaults to
 `orchestrator` and resolution fails with `route_unavailable`:
 
 ```sh
-agent-bridge run --provider agent-bridge --model effects --via fake-process \
+harness-relay run --provider harness-relay --model effects --via fake-process \
   --interaction deny --cwd "$(mktemp -d)" "write a file"
 ```
 
@@ -86,7 +86,7 @@ it emits:
 pnpm fake-harness -- --scenario effects --text "hello" --cwd "$(mktemp -d)"
 ```
 
-`AGENT_BRIDGE_FAKE_HARNESS_PATH` overrides the path to the script; the compiled
+`HARNESS_RELAY_FAKE_HARNESS_PATH` overrides the path to the script; the compiled
 tests set it because they run from `dist`. The `effects` scenario writes into
 the directory you pass with `--cwd`, so point it at a scratch directory.
 

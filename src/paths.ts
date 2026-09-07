@@ -57,18 +57,21 @@ function usableEnvironmentPath(name: string, environment: NodeJS.ProcessEnv): st
 
 export function brokerPaths(environment: NodeJS.ProcessEnv = process.env): BrokerPaths {
   const uid = typeof process.getuid === "function" ? process.getuid() : "user";
-  const configuredRuntimeDirectory = usableEnvironmentPath("AGENT_BRIDGE_RUNTIME_DIR", environment);
+  const configuredRuntimeDirectory = usableEnvironmentPath(
+    "HARNESS_RELAY_RUNTIME_DIR",
+    environment,
+  );
   const xdgRuntimeDirectory = usableEnvironmentPath("XDG_RUNTIME_DIR", environment);
-  const configuredSocketPath = usableEnvironmentPath("AGENT_BRIDGE_SOCKET_PATH", environment);
+  const configuredSocketPath = usableEnvironmentPath("HARNESS_RELAY_SOCKET_PATH", environment);
   const runtimeDirectory =
     configuredRuntimeDirectory ??
-    (xdgRuntimeDirectory === undefined ? undefined : join(xdgRuntimeDirectory, "agent-bridge")) ??
-    join(tmpdir(), `agent-bridge-${uid}`);
+    (xdgRuntimeDirectory === undefined ? undefined : join(xdgRuntimeDirectory, "harness-relay")) ??
+    join(tmpdir(), `harness-relay-${uid}`);
   const stateDirectory =
-    usableEnvironmentPath("AGENT_BRIDGE_STATE_DIR", environment) ??
+    usableEnvironmentPath("HARNESS_RELAY_STATE_DIR", environment) ??
     join(
       usableEnvironmentPath("XDG_STATE_HOME", environment) ?? join(homedir(), ".local", "state"),
-      "agent-bridge",
+      "harness-relay",
     );
   return {
     runtimeDirectory,

@@ -183,13 +183,13 @@ export async function loadBrokerConfig(
   }
 
   const environment: { -readonly [Key in keyof BrokerConfigValues]?: BrokerConfigValues[Key] } = {};
-  const retentionCompletedDays = envNumber("AGENT_BRIDGE_RETENTION_COMPLETED_DAYS", 0);
-  const retentionMaxBytes = envNumber("AGENT_BRIDGE_RETENTION_MAX_BYTES", 1);
-  const diagnosticMode = envBoolean("AGENT_BRIDGE_DIAGNOSTIC_MODE");
-  const idleShutdownMinutes = envNumber("AGENT_BRIDGE_IDLE_SHUTDOWN_MINUTES", 0);
-  const effectsMaxFiles = envNumber("AGENT_BRIDGE_EFFECTS_MAX_FILES", 1);
-  const effectsMaxBytes = envNumber("AGENT_BRIDGE_EFFECTS_MAX_BYTES", 1);
-  const terminationGraceMs = envNumber("AGENT_BRIDGE_TERMINATION_GRACE_MS", 1);
+  const retentionCompletedDays = envNumber("HARNESS_RELAY_RETENTION_COMPLETED_DAYS", 0);
+  const retentionMaxBytes = envNumber("HARNESS_RELAY_RETENTION_MAX_BYTES", 1);
+  const diagnosticMode = envBoolean("HARNESS_RELAY_DIAGNOSTIC_MODE");
+  const idleShutdownMinutes = envNumber("HARNESS_RELAY_IDLE_SHUTDOWN_MINUTES", 0);
+  const effectsMaxFiles = envNumber("HARNESS_RELAY_EFFECTS_MAX_FILES", 1);
+  const effectsMaxBytes = envNumber("HARNESS_RELAY_EFFECTS_MAX_BYTES", 1);
+  const terminationGraceMs = envNumber("HARNESS_RELAY_TERMINATION_GRACE_MS", 1);
   if (retentionCompletedDays !== undefined)
     environment.retentionCompletedDays = retentionCompletedDays;
   if (retentionMaxBytes !== undefined) environment.retentionMaxBytes = retentionMaxBytes;

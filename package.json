@@ -1,5 +1,5 @@
 {
-  "name": "@sebastian-software/agent-bridge",
+  "name": "harness-relay",
   "version": "0.1.0",
   "description": "Local harness-to-harness delegation gateway",
   "keywords": [
@@ -7,7 +7,8 @@
     "cli",
     "delegation",
     "harness",
-    "mcp"
+    "mcp",
+    "relay"
   ],
   "homepage": "https://github.com/sebastian-software/agent-bridge#readme",
   "bugs": {
@@ -20,7 +21,7 @@
     "url": "https://github.com/sebastian-software/agent-bridge.git"
   },
   "bin": {
-    "agent-bridge": "./dist/src/cli.js"
+    "harness-relay": "./dist/src/cli.js"
   },
   "files": [
     "dist/src",
