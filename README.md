@@ -2,7 +2,7 @@
 
 **Local harness-to-harness delegation gateway.**
 
-[![CI](https://github.com/sebastian-software/agent-bridge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sebastian-software/agent-bridge/actions/workflows/ci.yml)
+[![CI](https://github.com/sebastian-software/harness-relay/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sebastian-software/harness-relay/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](package.json)
 
@@ -53,7 +53,7 @@ outcome. The default socket is `$XDG_RUNTIME_DIR/harness-relay/broker.sock` when
 that variable is set; clients also read the legacy
 `$XDG_RUNTIME_DIR/broker.sock`, a migration path that the first release after
 0.1.0 removes
-([#127](https://github.com/sebastian-software/agent-bridge/issues/127)).
+([#127](https://github.com/sebastian-software/harness-relay/issues/127)).
 Otherwise a private platform-temporary directory is used; state lives in
 `~/.local/state/harness-relay`. Override them with `HARNESS_RELAY_RUNTIME_DIR`,
 `HARNESS_RELAY_STATE_DIR`, or `HARNESS_RELAY_SOCKET_PATH`.
