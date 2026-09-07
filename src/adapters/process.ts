@@ -19,6 +19,13 @@ const MAX_NATIVE_EVENT_BYTES = 64 * 1024;
 const TERMINATION_GRACE_MS = 2000;
 const REDACTED_ARGUMENT_FLAGS = new Set(["--text", "--prompt", "--prompt-file"]);
 
+// Bridge-internal variables never reach a harness process (ADR-0020). The
+// second entry is the pre-rename prefix: a shell or CI job that has not
+// finished the ADR-0021 migration may still export `AGENT_BRIDGE_*`, and a
+// stale export must not leak into the child either. Drop it once the migration
+// window closes.
+const BRIDGE_INTERNAL_ENVIRONMENT_PREFIXES = ["HARNESS_RELAY_", "AGENT_BRIDGE_"] as const;
+
 export type CommandSpec = {
   readonly executable: string;
   readonly args: readonly string[];
@@ -120,7 +127,9 @@ export abstract class ProcessAdapter implements Adapter {
     const deniedEnvironment = new Set(command.envDenyList ?? []);
     const environment = Object.fromEntries(
       Object.entries({ ...process.env, ...command.env }).filter(
-        ([key]) => !key.startsWith("HARNESS_RELAY_") && !deniedEnvironment.has(key),
+        ([key]) =>
+          !BRIDGE_INTERNAL_ENVIRONMENT_PREFIXES.some((prefix) => key.startsWith(prefix)) &&
+          !deniedEnvironment.has(key),
       ),
     );
     const child = spawn(command.executable, [...command.args], {

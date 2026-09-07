@@ -76,6 +76,11 @@ once:
 - re-register the MCP server under its new name, and update tool names from
   `agent_bridge_*` to `harness_relay_*`.
 
+Until that is done, the process adapter keeps stripping the pre-rename
+`AGENT_BRIDGE_*` prefix alongside `HARNESS_RELAY_*`, so a stale export in a
+shell or CI job cannot leak into a harness process during the migration window;
+the second prefix is removed once the window closes.
+
 The legacy `$XDG_RUNTIME_DIR/broker.sock` fallback recorded in ADR-0020's issue
 trail is unaffected: it predates the scoped directory and is removed on its own
 schedule.
