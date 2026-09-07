@@ -12,8 +12,8 @@ importers:
         specifier: ^1.30.0
         version: 1.30.0(supports-color@9.4.0)(zod@4.5.4)
       '@sebastian-software/standards':
-        specifier: 0.9.0
-        version: 0.9.0
+        specifier: 0.10.0
+        version: 0.10.0
       '@types/node':
         specifier: 24.10.1
         version: 24.10.1
@@ -813,8 +813,8 @@ packages:
     resolution: {integrity: sha512-SEeaJLb3qBNF/OaXnaR1NmmBbFYk1zC0ZH/52fATcRPLFg/p791YrcyFFy44Bo9sLaGuSuLp5Q6axbb/O+v/RA==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  '@sebastian-software/standards@0.9.0':
-    resolution: {integrity: sha512-uVsrjTS0XwCJH2xeWV01B+bz6byex1bIYQyJxkxH51qr7zWZghxsHmFBQqqgtZ8SeGLuuU6nmVH+y8WlTOTgLA==}
+  '@sebastian-software/standards@0.10.0':
+    resolution: {integrity: sha512-7b79pfy7oMkIpQAWYZENzi7yJP4VOI6vIgairtx0L0YJ99lbOFI2P94TPeBUSUFwjZvF39yIWmUeORZDrNdmVw==}
     engines: {node: '>=24.0.0'}
     hasBin: true
 
@@ -4020,7 +4020,7 @@ snapshots:
 
   '@pkgr/core@0.3.6': {}
 
-  '@sebastian-software/standards@0.9.0': {}
+  '@sebastian-software/standards@0.10.0': {}
 
   '@sindresorhus/base62@1.0.0': {}
 
