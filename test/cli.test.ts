@@ -231,7 +231,10 @@ test("CLI discovers, starts, follows, and inspects through the Unix socket", asy
     assert.ok(humanRun.stderr.includes("activity: fake-work"));
 
     const version = await execFile(process.execPath, [cliPath, "--version"], { env });
-    assert.equal(version.stdout.trim(), "0.1.0");
+    const manifest = JSON.parse(await readFile(join(process.cwd(), "package.json"), "utf8")) as {
+      readonly version: string;
+    };
+    assert.equal(version.stdout.trim(), manifest.version);
   } finally {
     try {
       await execFile(process.execPath, [cliPath, "broker", "stop", "--json"], { env });
