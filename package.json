@@ -10,15 +10,15 @@
     "mcp",
     "relay"
   ],
-  "homepage": "https://github.com/sebastian-software/agent-bridge#readme",
+  "homepage": "https://github.com/sebastian-software/harness-relay#readme",
   "bugs": {
-    "url": "https://github.com/sebastian-software/agent-bridge/issues"
+    "url": "https://github.com/sebastian-software/harness-relay/issues"
   },
   "license": "MIT",
   "author": "Sebastian Software GmbH",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sebastian-software/agent-bridge.git"
+    "url": "https://github.com/sebastian-software/harness-relay.git"
   },
   "bin": {
     "harness-relay": "./dist/src/cli.js"
