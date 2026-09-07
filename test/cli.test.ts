@@ -15,7 +15,7 @@ test("the published bin keeps its shebang", async () => {
   const manifest = JSON.parse(await readFile(join(process.cwd(), "package.json"), "utf8")) as {
     readonly bin: Readonly<Record<string, string>>;
   };
-  assert.equal(join(process.cwd(), manifest.bin["agent-bridge"] ?? ""), cliPath);
+  assert.equal(join(process.cwd(), manifest.bin["harness-relay"] ?? ""), cliPath);
 
   const [firstLine] = (await readFile(cliPath, "utf8")).split("\n", 1);
   assert.equal(firstLine, "#!/usr/bin/env node");
@@ -24,9 +24,9 @@ test("the published bin keeps its shebang", async () => {
 function testEnvironment(root: string): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    AGENT_BRIDGE_RUNTIME_DIR: join(root, "run"),
-    AGENT_BRIDGE_STATE_DIR: join(root, "state"),
-    AGENT_BRIDGE_SOCKET_PATH: join(tmpdir(), `${basename(root)}.sock`),
+    HARNESS_RELAY_RUNTIME_DIR: join(root, "run"),
+    HARNESS_RELAY_STATE_DIR: join(root, "state"),
+    HARNESS_RELAY_SOCKET_PATH: join(tmpdir(), `${basename(root)}.sock`),
   };
 }
 
@@ -70,13 +70,13 @@ function invocationIdFrom(stdout: string): string {
 }
 
 test("CLI discovers, starts, follows, and inspects through the Unix socket", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-cli-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-cli-"));
   const env = testEnvironment(root);
   const broker = spawn(process.execPath, [cliPath, "broker", "serve"], {
     env,
     stdio: "ignore",
   });
-  const client = new IpcClient(env.AGENT_BRIDGE_SOCKET_PATH ?? "");
+  const client = new IpcClient(env.HARNESS_RELAY_SOCKET_PATH ?? "");
   try {
     await waitForBroker(client);
     const described = await execFile(process.execPath, [cliPath, "describe", "--json"], { env });
@@ -95,9 +95,13 @@ test("CLI discovers, starts, follows, and inspects through the Unix socket", asy
     assert.ok(brokerStatus.environmentVariableNames.includes("PATH"));
 
     try {
-      await execFile(process.execPath, [cliPath, "start", "--provider", "agent-bridge", "--json"], {
-        env,
-      });
+      await execFile(
+        process.execPath,
+        [cliPath, "start", "--provider", "harness-relay", "--json"],
+        {
+          env,
+        },
+      );
       assert.fail("Invalid CLI input should fail.");
     } catch (error) {
       if (!(error instanceof Error) || !("stderr" in error) || typeof error.stderr !== "string") {
@@ -113,7 +117,7 @@ test("CLI discovers, starts, follows, and inspects through the Unix socket", asy
         cliPath,
         "start",
         "--provider",
-        "agent-bridge",
+        "harness-relay",
         "--model",
         "fake-echo",
         "--via",
@@ -182,7 +186,7 @@ test("CLI discovers, starts, follows, and inspects through the Unix socket", asy
         cliPath,
         "run",
         "--provider",
-        "agent-bridge",
+        "harness-relay",
         "--model",
         "fake-echo",
         "--via",
@@ -213,7 +217,7 @@ test("CLI discovers, starts, follows, and inspects through the Unix socket", asy
         cliPath,
         "run",
         "--provider",
-        "agent-bridge",
+        "harness-relay",
         "--model",
         "fake-echo",
         "--via",
@@ -240,9 +244,9 @@ test("CLI discovers, starts, follows, and inspects through the Unix socket", asy
 });
 
 test("a real broker crash is reconciled as interrupted after restart", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-crash-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-crash-"));
   const env = testEnvironment(root);
-  const socketPath = env.AGENT_BRIDGE_SOCKET_PATH ?? "";
+  const socketPath = env.HARNESS_RELAY_SOCKET_PATH ?? "";
   let broker = spawn(process.execPath, [cliPath, "broker", "serve"], { env, stdio: "ignore" });
   try {
     await waitForBroker(new IpcClient(socketPath));
@@ -252,7 +256,7 @@ test("a real broker crash is reconciled as interrupted after restart", async () 
         cliPath,
         "start",
         "--provider",
-        "agent-bridge",
+        "harness-relay",
         "--model",
         "fake-slow",
         "--text",
@@ -290,7 +294,7 @@ test("a real broker crash is reconciled as interrupted after restart", async () 
 });
 
 test("autostart includes the broker startup diagnostic when initialization fails", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-startup-error-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-startup-error-"));
   const stateDirectory = join(root, "state");
   await mkdir(stateDirectory);
   await chmod(stateDirectory, 0o755);
@@ -305,7 +309,7 @@ test("autostart includes the broker startup diagnostic when initialization fails
         return (
           error.stderr.includes(stateDirectory) &&
           error.stderr.includes("broker_unavailable") &&
-          !error.stderr.includes("Startup error: agent-bridge:") &&
+          !error.stderr.includes("Startup error: harness-relay:") &&
           !error.stderr.includes("(broker_unavailable) (broker_unavailable)")
         );
       },
@@ -316,7 +320,7 @@ test("autostart includes the broker startup diagnostic when initialization fails
 });
 
 test("CLI exits after autostarting a healthy broker", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-autostart-exit-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-autostart-exit-"));
   const env = testEnvironment(root);
   try {
     const result = await execFile(
@@ -325,7 +329,7 @@ test("CLI exits after autostarting a healthy broker", async () => {
         cliPath,
         "run",
         "--provider",
-        "agent-bridge",
+        "harness-relay",
         "--model",
         "fake-echo",
         "--via",

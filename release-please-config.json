@@ -5,7 +5,7 @@
   "include-component-in-tag": false,
   "packages": {
     ".": {
-      "component": "agent-bridge",
+      "component": "harness-relay",
       "changelog-path": "CHANGELOG.md",
       "extra-files": ["src/version.ts"]
     }

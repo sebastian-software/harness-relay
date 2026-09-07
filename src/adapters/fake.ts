@@ -8,7 +8,7 @@ const QUALIFIED_AT = "2026-08-27T00:00:00.000Z";
 function route(model: string): RouteDescriptor {
   return {
     routeId: `fake:${model}`,
-    provider: "agent-bridge",
+    provider: "harness-relay",
     model,
     efforts: ["low", "medium", "high"],
     via: "fake",
@@ -33,7 +33,7 @@ function route(model: string): RouteDescriptor {
 
 function observedIdentity(model: string): ObservedIdentity {
   return {
-    provider: { value: "agent-bridge", evidence: "verified", source: "fake-adapter" },
+    provider: { value: "harness-relay", evidence: "verified", source: "fake-adapter" },
     model: { value: model, evidence: "verified", source: "fake-adapter" },
     harnessVersion: { value: "1.0.0", evidence: "verified", source: "fake-adapter" },
     nativeSessionId: { evidence: "unverified" },

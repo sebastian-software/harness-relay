@@ -34,7 +34,7 @@ function request(
 ): StartInvocationRequest {
   return {
     selector: {
-      provider: "agent-bridge",
+      provider: "harness-relay",
       model,
       via: "fake",
       effort: "high",
@@ -98,7 +98,7 @@ class InteractiveAdapter implements Adapter {
     return [
       {
         routeId: "interactive:test",
-        provider: "agent-bridge",
+        provider: "harness-relay",
         model: "interactive",
         efforts: ["low", "medium", "high"],
         via: "interactive",
@@ -134,7 +134,7 @@ class InteractiveAdapter implements Adapter {
       content: [{ type: "text", text: response.decision }],
     });
     const identity: ObservedIdentity = {
-      provider: { value: "agent-bridge", evidence: "verified", source: "interactive-fixture" },
+      provider: { value: "harness-relay", evidence: "verified", source: "interactive-fixture" },
       model: { value: "interactive", evidence: "verified", source: "interactive-fixture" },
       harnessVersion: { value: "1.0.0", evidence: "verified", source: "interactive-fixture" },
       nativeSessionId: { evidence: "unverified" },
@@ -155,7 +155,7 @@ class NativePayloadAdapter implements Adapter {
     return [
       {
         routeId: "native-payload:test",
-        provider: "agent-bridge",
+        provider: "harness-relay",
         model: "native-payload",
         efforts: ["high"],
         via: "native-payload",
@@ -190,7 +190,7 @@ class NativePayloadAdapter implements Adapter {
       artifacts: [],
       effects: [],
       observedIdentity: {
-        provider: { value: "agent-bridge", evidence: "verified", source: "native-fixture" },
+        provider: { value: "harness-relay", evidence: "verified", source: "native-fixture" },
         model: { value: "native-payload", evidence: "verified", source: "native-fixture" },
         harnessVersion: { value: "1.0.0", evidence: "verified", source: "native-fixture" },
         nativeSessionId: { evidence: "unverified" },
@@ -200,7 +200,7 @@ class NativePayloadAdapter implements Adapter {
 }
 
 test("broker runs asynchronously, persists events, and deduplicates starts", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-broker-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-broker-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -257,7 +257,7 @@ test("broker runs asynchronously, persists events, and deduplicates starts", asy
 });
 
 test("store persists invocation metadata and events in separate files", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-store-layout-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-store-layout-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -296,7 +296,7 @@ test("store persists invocation metadata and events in separate files", async ()
 });
 
 test("store appends activity events without rewriting stable metadata", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-store-writes-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-store-writes-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -335,7 +335,7 @@ test("store appends activity events without rewriting stable metadata", async ()
 });
 
 test("broker cancels active adapter work before producing a terminal outcome", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-cancel-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-cancel-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -358,7 +358,7 @@ test("broker cancels active adapter work before producing a terminal outcome", a
 });
 
 test("forced broker shutdown records active invocations as interrupted", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-shutdown-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-shutdown-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -387,7 +387,7 @@ test("forced broker shutdown records active invocations as interrupted", async (
 });
 
 test("private broker directories reject world-writable paths", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-private-dir-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-private-dir-"));
   const wide = join(root, "wide");
   try {
     await mkdir(wide);
@@ -411,14 +411,14 @@ test("broker supervises the fake harness process across success and failure scen
     { model: "effects", state: "succeeded" },
   ] as const;
   for (const scenario of scenarios) {
-    const root = await mkdtemp(join(tmpdir(), `agent-bridge-process-${scenario.model}-`));
+    const root = await mkdtemp(join(tmpdir(), `harness-relay-process-${scenario.model}-`));
     const broker = new Broker(paths(root));
     await broker.initialize();
     try {
       const started = await broker.start(
         request(root, scenario.model, {
           selector: {
-            provider: "agent-bridge",
+            provider: "harness-relay",
             model: scenario.model,
             via: "fake-process",
             effort: "high",
@@ -461,7 +461,7 @@ test("broker supervises the fake harness process across success and failure scen
 });
 
 test("broker turns an early harness exit while writing stdin into a failed invocation", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-stdin-error-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-stdin-error-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -487,14 +487,14 @@ test("broker turns an early harness exit while writing stdin into a failed invoc
 });
 
 test("broker cancellation terminates a supervised fake harness process", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-process-cancel-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-process-cancel-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
     const started = await broker.start(
       request(root, "cancel", {
         selector: {
-          provider: "agent-bridge",
+          provider: "harness-relay",
           model: "cancel",
           via: "fake-process",
           effort: "high",
@@ -519,7 +519,7 @@ test("broker cancellation terminates a supervised fake harness process", async (
 });
 
 test("broker resumes an invocation after an orchestrator input response", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-input-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-input-"));
   const broker = new Broker(paths(root), {
     registry: new AdapterRegistry([new InteractiveAdapter()]),
   });
@@ -528,7 +528,7 @@ test("broker resumes an invocation after an orchestrator input response", async 
     const started = await broker.start(
       request(root, "interactive", {
         selector: {
-          provider: "agent-bridge",
+          provider: "harness-relay",
           model: "interactive",
           via: "interactive",
           requiredCapabilities: ["core.input.text"],
@@ -560,8 +560,8 @@ test("broker resumes an invocation after an orchestrator input response", async 
 });
 
 test("broker keeps native payloads bounded unless diagnostic mode is enabled", async () => {
-  const regularRoot = await mkdtemp(join(tmpdir(), "agent-bridge-native-regular-"));
-  const diagnosticRoot = await mkdtemp(join(tmpdir(), "agent-bridge-native-diagnostic-"));
+  const regularRoot = await mkdtemp(join(tmpdir(), "harness-relay-native-regular-"));
+  const diagnosticRoot = await mkdtemp(join(tmpdir(), "harness-relay-native-diagnostic-"));
   const run = async (
     root: string,
     diagnosticMode: boolean,
@@ -575,7 +575,7 @@ test("broker keeps native payloads bounded unless diagnostic mode is enabled", a
       const started = await broker.start(
         request(root, "native-payload", {
           selector: {
-            provider: "agent-bridge",
+            provider: "harness-relay",
             model: "native-payload",
             via: "native-payload",
             effort: "high",
@@ -629,7 +629,7 @@ test("broker keeps native payloads bounded unless diagnostic mode is enabled", a
 });
 
 test("broker distinguishes timeout from caller cancellation", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-timeout-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-timeout-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -644,14 +644,14 @@ test("broker distinguishes timeout from caller cancellation", async () => {
 });
 
 test("cancelled process invocations retain output and usage observed before termination", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-partial-result-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-partial-result-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
     const started = await broker.start(
       request(root, "slow", {
         selector: {
-          provider: "agent-bridge",
+          provider: "harness-relay",
           model: "slow",
           via: "fake-process",
           effort: "high",
@@ -702,7 +702,7 @@ test("cancelled process invocations retain output and usage observed before term
 });
 
 test("route resolution rejects assurance the fake route cannot provide", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-policy-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-policy-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -721,7 +721,7 @@ test("route resolution rejects assurance the fake route cannot provide", async (
 });
 
 test("broker rejects overlapping active invocations in one working directory", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-concurrency-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-concurrency-"));
   const broker = new Broker(paths(root));
   await broker.initialize();
   try {
@@ -739,8 +739,8 @@ test("broker rejects overlapping active invocations in one working directory", a
 });
 
 test("restart reconciliation marks a persisted active snapshot interrupted", async () => {
-  const liveRoot = await mkdtemp(join(tmpdir(), "agent-bridge-live-"));
-  const restartRoot = await mkdtemp(join(tmpdir(), "agent-bridge-restart-"));
+  const liveRoot = await mkdtemp(join(tmpdir(), "harness-relay-live-"));
+  const restartRoot = await mkdtemp(join(tmpdir(), "harness-relay-restart-"));
   const liveBroker = new Broker(paths(liveRoot));
   await liveBroker.initialize();
   let started: StartInvocationResult | undefined;
@@ -773,7 +773,7 @@ test("restart reconciliation marks a persisted active snapshot interrupted", asy
 });
 
 test("retention evicts completed records and persists tombstones", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-retention-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-retention-"));
   const brokerOptions = { retention: { completedMs: 0, maxBytes: 1_073_741_824 } };
   const broker = new Broker(paths(root), brokerOptions);
   await broker.initialize();

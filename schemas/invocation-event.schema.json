@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "agent-bridge://schemas/invocation-event.schema.json",
-  "title": "Agent Bridge invocation event",
+  "$id": "harness-relay://schemas/invocation-event.schema.json",
+  "title": "Harness Relay invocation event",
   "type": "object",
   "additionalProperties": false,
   "required": [

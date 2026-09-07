@@ -43,7 +43,7 @@ class CountingAdapter implements Adapter {
 }
 
 test("user model catalog adds aliases and canonical native model mappings", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-catalog-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-catalog-"));
   const catalogPath = join(root, "config.json");
   await writeFile(
     catalogPath,
@@ -73,7 +73,12 @@ test("user model catalog adds aliases and canonical native model mappings", asyn
     assert.deepEqual(custom?.efforts, ["low"]);
 
     const resolved = await registry.resolve({
-      selector: { provider: "agent-bridge", model: "quick", via: "fake", requiredCapabilities: [] },
+      selector: {
+        provider: "harness-relay",
+        model: "quick",
+        via: "fake",
+        requiredCapabilities: [],
+      },
       input: [{ type: "text", text: "hello" }],
       workingDirectory: root,
       interactionStrategy: "deny",

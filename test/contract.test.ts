@@ -11,7 +11,7 @@ import { BridgeError } from "../src/errors.js";
 test("start request parsing applies honest defaults", () => {
   const request = parseStartInvocationRequest({
     selector: {
-      provider: "agent-bridge",
+      provider: "harness-relay",
       model: "fake-echo",
     },
     input: [{ type: "text", text: "hello" }],
@@ -27,7 +27,7 @@ test("start request parsing rejects invalid multimodal boundaries", () => {
   assert.throws(
     () =>
       parseStartInvocationRequest({
-        selector: { provider: "agent-bridge", model: "fake-echo" },
+        selector: { provider: "harness-relay", model: "fake-echo" },
         input: [{ type: "file", path: "report.txt" }],
         workingDirectory: "/tmp",
       }),
@@ -39,7 +39,7 @@ test("start request parsing bounds timeout values", () => {
   assert.throws(
     () =>
       parseStartInvocationRequest({
-        selector: { provider: "agent-bridge", model: "fake-echo" },
+        selector: { provider: "harness-relay", model: "fake-echo" },
         input: [{ type: "text", text: "hello" }],
         workingDirectory: "/tmp",
         timeoutMs: 0,
@@ -50,7 +50,7 @@ test("start request parsing bounds timeout values", () => {
 
 test("content references allow an empty file with byteSize zero", () => {
   const request = parseStartInvocationRequest({
-    selector: { provider: "agent-bridge", model: "fake-echo" },
+    selector: { provider: "harness-relay", model: "fake-echo" },
     input: [
       {
         type: "file",

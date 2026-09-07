@@ -120,7 +120,7 @@ export abstract class ProcessAdapter implements Adapter {
     const deniedEnvironment = new Set(command.envDenyList ?? []);
     const environment = Object.fromEntries(
       Object.entries({ ...process.env, ...command.env }).filter(
-        ([key]) => !key.startsWith("AGENT_BRIDGE_") && !deniedEnvironment.has(key),
+        ([key]) => !key.startsWith("HARNESS_RELAY_") && !deniedEnvironment.has(key),
       ),
     );
     const child = spawn(command.executable, [...command.args], {

@@ -22,7 +22,7 @@ the reproduction commands only work against that historical checkout.
 
 TanStack AI is a useful implementation reference and could later become an
 optional adapter, but the tested RC packages should not be the foundational
-MVP harness layer of agent-bridge.
+MVP harness layer of harness-relay.
 
 Both adapters successfully proved normalized streaming, host authentication,
 in-place workspace changes, native session continuation, and signal-driven
@@ -50,7 +50,7 @@ detach-versus-cancel design without depending on its chat or sandbox lifecycle.
 The orphaned Codex test process was verified with parent PID 1 and then
 explicitly terminated. The Claude cancellation left no matching process.
 
-## Findings that affect agent-bridge
+## Findings that affect harness-relay
 
 ### Strong fit
 
@@ -70,7 +70,7 @@ explicitly terminated. The Claude cancellation left no matching process.
    but the command launched by Codex remained as an orphaned process. A broker
    cannot claim reliable cancellation on top of the adapter unchanged.
 2. **No terminal cancellation event.** Both cancelled streams ended without
-   `RUN_FINISHED` or `RUN_ERROR`. Agent-bridge would have to synthesize and
+   `RUN_FINISHED` or `RUN_ERROR`. Harness Relay would have to synthesize and
    persist its own terminal `cancelled` outcome.
 3. **Workspace projection is not transparent.** `withSandbox()` requires an
    explicit workspace in the published package combination. Without one it
@@ -131,7 +131,7 @@ stored in the operating-system temp directory and is not committed.
 ## Proposed dependency decision
 
 - Do not make TanStack AI a required MVP runtime dependency.
-- Keep the agent-bridge event and content contracts independent of AG-UI.
+- Keep the harness-relay event and content contracts independent of AG-UI.
 - Implement Claude through its native Agent SDK and Codex through app-server so
   live input, approvals, runtime identity, and process ownership remain under
   bridge control.

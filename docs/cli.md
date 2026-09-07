@@ -31,9 +31,9 @@ these ways: a positional argument (especially for `run`), `--text <text>`,
 for a complete content-part array. `--cwd` defaults to the current directory.
 
 ```sh
-agent-bridge start --provider agent-bridge --model fake-echo --via fake \
+harness-relay start --provider harness-relay --model fake-echo --via fake \
   --cwd "$PWD" --text "hello" --json
-agent-bridge run --provider anthropic --model opus --interaction deny \
+harness-relay run --provider anthropic --model opus --interaction deny \
   "Summarize this workspace"
 ```
 
@@ -50,9 +50,9 @@ programmatic convenience is `createClient().run(request)`.
 ## Reading progress
 
 ```sh
-agent-bridge events <invocation-id> --follow
-agent-bridge wait <invocation-id> --until-terminal --json
-agent-bridge result <invocation-id> --fail-on-error
+harness-relay events <invocation-id> --follow
+harness-relay wait <invocation-id> --until-terminal --json
+harness-relay result <invocation-id> --fail-on-error
 ```
 
 `events` prints one concise category/summary line in human mode. JSON mode
@@ -63,8 +63,8 @@ text content in human mode and the full outcome with `--json`.
 ## Listing
 
 ```sh
-agent-bridge list
-agent-bridge list --active --correlation build-42 --json
+harness-relay list
+harness-relay list --active --correlation build-42 --json
 ```
 
 The list operation can also filter by `state`, `since`, and `limit` through the

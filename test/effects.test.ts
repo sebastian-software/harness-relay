@@ -19,11 +19,11 @@ async function git(root: string, ...args: string[]): Promise<void> {
 }
 
 test("Git observation reports creates, modifications, deletes, renames, and ignores", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-effects-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-effects-"));
   try {
     await git(root, "init", "--quiet");
-    await git(root, "config", "user.name", "Agent Bridge Test");
-    await git(root, "config", "user.email", "agent-bridge-test@example.invalid");
+    await git(root, "config", "user.name", "Harness Relay Test");
+    await git(root, "config", "user.email", "harness-relay-test@example.invalid");
     await writeFile(join(root, ".gitignore"), "ignored.txt\n", "utf8");
     await writeFile(join(root, "tracked.txt"), "before\n", "utf8");
     await writeFile(join(root, "deleted.txt"), "delete me\n", "utf8");
@@ -52,7 +52,7 @@ test("Git observation reports creates, modifications, deletes, renames, and igno
 });
 
 test("non-Git directories report incomplete observation instead of claiming no effects", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-effects-non-git-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-effects-non-git-"));
   try {
     await mkdir(join(root, "nested"));
     const snapshot = await captureWorkspaceSnapshot(root);

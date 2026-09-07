@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "agent-bridge://schemas/operations.schema.json",
-  "title": "Agent Bridge operations description",
+  "$id": "harness-relay://schemas/operations.schema.json",
+  "title": "Harness Relay operations description",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "operationsVersion", "schemas", "operations"],

@@ -310,7 +310,7 @@ export class ClaudeAdapter extends ProcessAdapter {
 
   constructor(options?: { readonly executable?: string; readonly probe?: DiscoveryProbe }) {
     super();
-    this.#executable = options?.executable ?? process.env.AGENT_BRIDGE_CLAUDE_PATH;
+    this.#executable = options?.executable ?? process.env.HARNESS_RELAY_CLAUDE_PATH;
     this.#probe = options?.probe;
   }
 

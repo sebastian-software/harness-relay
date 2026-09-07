@@ -42,7 +42,7 @@ test("fake harness exposes failure and malformed-output scenarios", async () => 
 });
 
 test("fake harness writes and renames files in the requested workspace", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-bridge-fake-"));
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-fake-"));
   try {
     await execFile(process.execPath, [
       harnessPath,

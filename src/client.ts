@@ -23,7 +23,7 @@ const MAX_STARTUP_DIAGNOSTIC_BYTES = 4 * 1024;
 function normalizeStartupDiagnostic(line: string): string {
   return (
     line
-      .replace(/^agent-bridge:\s*/i, "")
+      .replace(/^harness-relay:\s*/i, "")
       // eslint-disable-next-line regexp/no-super-linear-move -- input is one bounded diagnostic line produced by this CLI
       .replace(/\s+\(\w+\)\s*$/, "")
       .trim()
@@ -134,7 +134,7 @@ function activeInvocations(value: unknown): number {
     : 0;
 }
 
-export class AgentBridgeClient {
+export class HarnessRelayClient {
   #socketPath: string;
   #legacySocketPath: string | undefined;
   readonly #autostart: boolean;
@@ -313,7 +313,7 @@ export class AgentBridgeClient {
     const child = spawn(process.execPath, [cliPath, "broker", "serve"], {
       detached: true,
       stdio: ["ignore", "ignore", "pipe"],
-      env: { ...process.env, AGENT_BRIDGE_DAEMON: "1" },
+      env: { ...process.env, HARNESS_RELAY_DAEMON: "1" },
     });
     let startupStderr = "";
     child.stderr?.setEncoding("utf8");
@@ -390,6 +390,6 @@ export class AgentBridgeClient {
   }
 }
 
-export function createClient(options?: ClientOptions): AgentBridgeClient {
-  return new AgentBridgeClient(options);
+export function createClient(options?: ClientOptions): HarnessRelayClient {
+  return new HarnessRelayClient(options);
 }

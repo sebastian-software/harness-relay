@@ -1,7 +1,6 @@
 # Releasing
 
-`@sebastian-software/agent-bridge` releases are automated. Nothing is published
-by hand.
+`harness-relay` releases are automated. Nothing is published by hand.
 
 ## How a release happens
 
@@ -20,12 +19,12 @@ before publishing.
 
 ## Configuration the automation depends on
 
-- **npm Trusted Publishing** for `@sebastian-software/agent-bridge`, bound to
-  repository `sebastian-software/agent-bridge` and workflow `publish.yml`. The
-  job requests an OIDC token (`id-token: write`) and consumes no `NPM_TOKEN`.
-  Until Trusted Publishing is configured, the publish step fails at
-  authentication; the release itself is unaffected and the publish can be
-  retried afterwards.
+- **npm Trusted Publishing** for `harness-relay`, bound to this repository and
+  the `publish.yml` workflow, with the `npm-release` environment. Configuring
+  it is the repository owner's one manual step. The job requests an OIDC token
+  (`id-token: write`) and consumes no `NPM_TOKEN`. Until Trusted Publishing is
+  configured, the publish step fails at authentication; the release itself is
+  unaffected and the publish can be retried afterwards.
 - **`RELEASE_PLEASE_TOKEN`** (optional). Events created with the built-in
   `GITHUB_TOKEN` do not start new workflow runs, so without this token the
   release pull request has no CI checks. Everything else works.

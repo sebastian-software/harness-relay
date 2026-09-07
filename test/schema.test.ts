@@ -11,7 +11,7 @@ test("published schemas are valid JSON documents with stable identities", async 
     const text = await readFile(join(process.cwd(), definition.path), "utf8");
     const schema = JSON.parse(text) as Record<string, unknown>;
     assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
-    assert.equal(schema.$id, `agent-bridge://schemas/${definition.path.split("/").at(-1)}`);
+    assert.equal(schema.$id, `harness-relay://schemas/${definition.path.split("/").at(-1)}`);
     assert.equal(schema.type, "object");
   }
 });

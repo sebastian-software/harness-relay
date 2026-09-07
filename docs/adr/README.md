@@ -25,6 +25,7 @@ how a decision changed; the current text is normative.
 | 0018 | Policy assurance without an isolation claim        |
 | 0019 | Atomic completed-invocation eviction               |
 | 0020 | M0 operational decisions                           |
+| 0021 | Rename the tool to harness-relay                   |
 
 Open questions are maintained in [`CONTEXT.md`](../../CONTEXT.md) and the
 GitHub issue tracker rather than in stale ADR lists.

@@ -16,7 +16,7 @@ config.unshift({
   ],
 });
 
-// agent-bridge was linted with Biome's recommended set before it adopted the
+// harness-relay was linted with Biome's recommended set before it adopted the
 // org standards. The rules below fire throughout the existing, reviewed
 // implementation; they are parked here so the gate reports real regressions
 // today. Re-enabling them one by one, with the refactors they ask for, is
@@ -50,7 +50,7 @@ config.push({
   },
 });
 
-// package.json exposes the compiled dist/src/cli.js as the `agent-bridge` bin.
+// package.json exposes the compiled dist/src/cli.js as the `harness-relay` bin.
 // Without this mapping node/hashbang sees src/cli.ts as a plain module and its
 // autofix strips the shebang (#124); with it the rule requires the shebang on
 // exactly the sources that compile to a bin entry.

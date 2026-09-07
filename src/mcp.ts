@@ -9,7 +9,7 @@ import { OPERATION_DEFINITIONS, OPERATIONS_VERSION } from "./operations.js";
 
 const MCP_PROTOCOL_VERSION = "2025-06-18";
 const SUPPORTED_PROTOCOL_VERSIONS = new Set([MCP_PROTOCOL_VERSION, "2025-03-26", "2024-11-05"]);
-const TOOL_PREFIX = "agent_bridge_";
+const TOOL_PREFIX = "harness_relay_";
 
 type RpcId = null | number | string;
 type OperationHandler = (operation: string, params: unknown) => Promise<unknown>;
@@ -163,7 +163,7 @@ export class McpServer {
         response(request.id, {
           protocolVersion,
           capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: "agent-bridge", version: OPERATIONS_VERSION },
+          serverInfo: { name: "harness-relay", version: OPERATIONS_VERSION },
         }),
       );
     }
@@ -191,7 +191,7 @@ export class McpServer {
         return JSON.stringify(
           response(request.id, {
             isError: true,
-            content: [{ type: "text", text: "Unknown agent-bridge tool." }],
+            content: [{ type: "text", text: "Unknown harness-relay tool." }],
           }),
         );
       }
