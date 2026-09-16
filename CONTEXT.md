@@ -55,6 +55,11 @@ outcome. It does not become the caller's workflow orchestrator.
   working directory and may leave effects there. It is not a transaction or an
   isolation boundary.
 - **Workflow:** Caller-owned coordination of one or more invocations.
+- **Delegation skill:** Caller-side instructions for handing one bounded task
+  to a delegate and interpreting its outcome.
+- **Workflow skill:** Caller-side instructions for coordinating invocations
+  toward a specific goal. The caller remains the root and owns the final
+  decision.
 - **Interaction strategy:** Explicit handling of native approvals and input:
   `orchestrator`, `deny`, or `unattended`.
 - **Requested policy:** Permissions the caller asks the selected route to use.

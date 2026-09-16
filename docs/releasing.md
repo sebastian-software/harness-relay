@@ -2,6 +2,44 @@
 
 `harness-relay` releases are automated. Nothing is published by hand.
 
+## First usable public release
+
+The target for the first usable public release is **0.1.0**, retaining the
+Developer Preview scope in [ADR-0007](adr/0007-typescript-and-unix-first.md).
+The existing npm version `0.0.0` reserves the package name and contains no CLI.
+
+The release must provide a working CLI and installable skills for general
+delegation, an independent second opinion, and a review with multiple models
+from public sources. Documented installation steps are sufficient; a custom
+installer is not a release requirement. The skill boundary is recorded in
+[ADR-0023](adr/0023-ship-caller-side-delegation-and-workflow-skills.md).
+
+The current version bootstrap described below must be reconciled with this
+target before the release pull request is finalized.
+
+## First-release acceptance
+
+The release candidate must pass the repository's existing macOS and Linux
+checks and demonstrate the following:
+
+- The packed CLI installs and runs outside the development checkout, with all
+  required runtime files included.
+- All three skills are discoverable and usable in Claude Code and Codex through
+  documented installation steps. The documentation identifies the public skill
+  source and version as well as Node.js, harness installation, and native login
+  prerequisites.
+- Real Claude and Codex invocations exercise the delegation path. Second-opinion
+  and multi-model review reports identify their contributors, retain differing
+  findings, and expose failed or incomplete contributions.
+- Regression checks cover process cleanup after errors, incomplete native
+  output, policy argument mapping, and configured model aliases.
+- The generated release candidate consistently identifies version `0.1.0`, and
+  npm Trusted Publishing is configured for the actual repository and workflow.
+
+After publication, repeat the documented installation from the public npm
+registry and the versioned public skill source. Successful tests against a local
+tarball alone do not establish public installability.
+
 ## How a release happens
 
 1. Every pull request lands with a Conventional Commit title. CI checks the
@@ -38,8 +76,21 @@ exists.
 
 ## Version bootstrap
 
-`.release-please-manifest.json` starts at `0.1.0`, the hand-written
-`CHANGELOG.md` entry for the never-published first version. The
-`bootstrap-sha` in `release-please-config.json` marks the last commit that
-entry covers; the next generated changelog starts after it. Remove
-`bootstrap-sha` once the first generated release pull request has merged.
+The committed manifest currently records `0.1.0` even though that version has
+never been published. Release Please interprets this as a previous release,
+which lets the breaking rename advance the release candidate to `1.0.0`.
+
+The required first-release correction is pending implementation:
+
+1. Start with an empty manifest and set `initial-version` explicitly to `0.1.0`
+   in the release configuration.
+2. Remove the old `bootstrap-sha` and reconcile the hand-written changelog entry
+   with the first actual release.
+3. Regenerate the release candidate and verify that it contains one `0.1.0`
+   release, consistent package and runtime versions, and the intended CLI and
+   skill artifacts.
+4. Merge the verified release pull request through the normal automated path.
+
+The shared [Release Please reference](https://github.com/sebastian-software/standards/tree/main/reference/release-please)
+provides the single-product release pattern. The pinned Release Please version
+supports the explicit initial version; do not rely on an implicit default.
