@@ -14,13 +14,16 @@ from public sources. Documented installation steps are sufficient; a custom
 installer is not a release requirement. The skill boundary is recorded in
 [ADR-0023](adr/0023-ship-caller-side-delegation-and-workflow-skills.md).
 
-The current version bootstrap described below must be reconciled with this
-target before the release pull request is finalized.
+The version bootstrap below defines how the release pull request reaches this
+target without treating the reserved npm placeholder as a prior release.
 
 ## First-release acceptance
 
 The release candidate must pass the repository's existing macOS and Linux
 checks and demonstrate the following:
+
+The latest runtime qualification evidence and its limits are recorded in the
+[0.1.0 qualification record](qualification/2026-09-16-release-0.1.0.md).
 
 - The packed CLI installs and runs outside the development checkout, with all
   required runtime files included.
@@ -33,8 +36,9 @@ checks and demonstrate the following:
   findings, and expose failed or incomplete contributions.
 - Regression checks cover process cleanup after errors, incomplete native
   output, policy argument mapping, and configured model aliases.
-- The generated release candidate consistently identifies version `0.1.0`, and
-  npm Trusted Publishing is configured for the actual repository and workflow.
+- The generated release candidate consistently identifies version `0.1.0`.
+- npm Trusted Publishing is configured for the actual repository and workflow
+  before the publish job is enabled for the release.
 
 After publication, repeat the documented installation from the public npm
 registry and the versioned public skill source. Successful tests against a local
@@ -49,11 +53,13 @@ tarball alone do not establish public installability.
    It maintains a single release pull request that bumps `package.json`,
    regenerates `src/version.ts` and prepends a `CHANGELOG.md` entry.
 3. Merging that pull request creates the tag (`v<version>`) and the GitHub
-   Release, and the same workflow then publishes the tag to npm with
-   `pnpm publish --provenance --access public`.
+   Release, and the same workflow then publishes the tag to npm with the shared
+   `publish-npm` action. The action derives `latest` for stable versions,
+   preserves a prerelease dist-tag for candidates, and attaches provenance.
 
 The publish job checks out the release tag, never `main`, and runs `pnpm check`
-before publishing.
+before publishing. It resolves the ref under `refs/tags/` and rejects a tag
+unless its SemVer value exactly matches the checked-out `package.json` version.
 
 ## Configuration the automation depends on
 
@@ -76,21 +82,39 @@ exists.
 
 ## Version bootstrap
 
-The committed manifest currently records `0.1.0` even though that version has
-never been published. Release Please interprets this as a previous release,
-which lets the breaking rename advance the release candidate to `1.0.0`.
+The first-release bootstrap is now represented by an empty
+`.release-please-manifest.json` and an explicit top-level `initial-version` of
+`0.1.0` in `release-please-config.json`. There is no `bootstrap-sha`: the first
+candidate includes the repository history that belongs in the public release.
+The hand-written versioned changelog entry was removed so Release Please owns
+the first `0.1.0` entry and does not create duplicate release notes.
 
-The required first-release correction is pending implementation:
+Before merging the first release pull request, inspect the generated candidate
+and confirm all of the following:
 
-1. Start with an empty manifest and set `initial-version` explicitly to `0.1.0`
-   in the release configuration.
-2. Remove the old `bootstrap-sha` and reconcile the hand-written changelog entry
-   with the first actual release.
-3. Regenerate the release candidate and verify that it contains one `0.1.0`
-   release, consistent package and runtime versions, and the intended CLI and
-   skill artifacts.
-4. Merge the verified release pull request through the normal automated path.
+1. There is one release PR for the root component and its proposed version is
+   exactly `0.1.0` (not `1.0.0` or a second release).
+2. The candidate keeps `package.json`, `src/version.ts`, and the generated CLI
+   output on the same `0.1.0` version.
+3. `CHANGELOG.md` has one generated `0.1.0` entry containing the intended CLI,
+   broker, schema, and skill changes.
+4. A package dry run contains `dist/src`, `schemas`, `skills`, and the public
+   skill documentation, and the packed CLI runs outside the checkout.
+5. The release commit creates tag `v0.1.0`; the publish job checks out that tag
+   under `refs/tags/`, verifies its package-version match, and does not publish
+   from `main`.
+
+After the tag is published, repeat the installation smoke check from the
+public registries. For example, install `harness-relay@0.1.0` from npm in a
+fresh temporary directory, run `npx harness-relay --version`, and verify the
+output is `0.1.0`. Then install each skill from the versioned public source and
+confirm the three documented skill directories are discoverable. These checks
+establish public installability; a local tarball check alone does not.
 
 The shared [Release Please reference](https://github.com/sebastian-software/standards/tree/main/reference/release-please)
-provides the single-product release pattern. The pinned Release Please version
-supports the explicit initial version; do not rely on an implicit default.
+provides the single-product release pattern. The pinned Release Please action
+uses the `release-please` 17.6.0 implementation, which supports the explicit
+`initial-version` setting. The npm publisher is pinned to the
+`standards-v0.12.0` `publish-npm` action. The repository does not verify the
+external npm Trusted Publisher or environment configuration; the owner must
+complete and validate that setup before publishing.
