@@ -36,7 +36,7 @@ jobs:
         run: node scripts/check-workflow-pins.mjs
 
   standards:
-    name: Org standards
+    name: Standards / Consistency
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
