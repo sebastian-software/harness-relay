@@ -93,6 +93,21 @@ function killProcessGroup(child: ChildProcess, signal: NodeJS.Signals): void {
   }
 }
 
+function processGroupExists(child: ChildProcess): boolean {
+  if (child.pid === undefined) {
+    return false;
+  }
+  if (process.platform === "win32") {
+    return child.exitCode === null && child.signalCode === null;
+  }
+  try {
+    process.kill(-child.pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function diagnosticArgs(args: readonly string[]): readonly string[] {
   const result: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
@@ -204,23 +219,50 @@ export abstract class ProcessAdapter implements Adapter {
       usage: undefined as undefined | Usage,
       failure: undefined as AdapterEvent["failure"],
     };
+    let nativeResultSeen = false;
     let terminationTimer: NodeJS.Timeout | undefined;
     let terminationStarted = false;
-    const terminate = (): void => {
-      if (terminationStarted) {
-        return;
+    let terminationPromise: Promise<void> | undefined;
+    const terminate = async (): Promise<void> => {
+      if (terminationPromise !== undefined) {
+        return terminationPromise;
       }
       terminationStarted = true;
       killProcessGroup(child, "SIGINT");
-      terminationTimer = setTimeout(() => {
-        killProcessGroup(child, "SIGKILL");
-      }, context.terminationGraceMs ?? TERMINATION_GRACE_MS);
-      terminationTimer.unref();
+      terminationPromise = new Promise<void>((resolve) => {
+        let forceKilled = false;
+        const forceTerminate = (): void => {
+          forceKilled = true;
+          killProcessGroup(child, "SIGKILL");
+          // SIGKILL is synchronous with respect to signal delivery. The
+          // leader's close event is still awaited below so its stdio and PID
+          // are reaped before the adapter rejects.
+          void exitPromise.then(() => {
+            setImmediate(resolve);
+          });
+        };
+        terminationTimer = setTimeout(
+          forceTerminate,
+          context.terminationGraceMs ?? TERMINATION_GRACE_MS,
+        );
+        void exitPromise.then(() => {
+          // A leader can exit while a descendant keeps the process group alive.
+          // Keep the grace timer in that case so the group is still force-killed.
+          if (!forceKilled && !processGroupExists(child)) {
+            clearTimeout(terminationTimer);
+            resolve();
+          }
+        });
+      });
+      return terminationPromise;
     };
     const onAbort = (): void => {
-      terminate();
+      void terminate();
     };
     context.signal.addEventListener("abort", onAbort, { once: true });
+    if (context.signal.aborted) {
+      void terminate();
+    }
 
     // Attach the stdout consumer before the first await. When the child exits,
     // Node flushes and discards every stdio stream nobody is reading yet, so a
@@ -271,6 +313,9 @@ export abstract class ProcessAdapter implements Adapter {
           }
           const event = this.normalizeNative(native, state);
           if (event !== undefined) {
+            if (event.data?.state === "native_result") {
+              nativeResultSeen = true;
+            }
             if (event.effects !== undefined) {
               state.effects.push(...event.effects);
             }
@@ -299,6 +344,9 @@ export abstract class ProcessAdapter implements Adapter {
                   ...(event.inputRequest.toolName === undefined
                     ? {}
                     : { toolName: event.inputRequest.toolName }),
+                  ...(event.inputRequest.input === undefined
+                    ? {}
+                    : { input: event.inputRequest.input }),
                 },
               });
               if (context.awaitInput === undefined || child.stdin === null) {
@@ -335,8 +383,10 @@ export abstract class ProcessAdapter implements Adapter {
             } else {
               await context.emit(event);
             }
+            const nativeState = event.data?.state;
             if (
-              event.data?.state === "native_result" &&
+              typeof nativeState === "string" &&
+              nativeState.startsWith("native_") &&
               child.stdin !== null &&
               command.keepStdinOpen === true
             ) {
@@ -387,6 +437,14 @@ export abstract class ProcessAdapter implements Adapter {
           details: { exitCode: exit.code, signal: exit.signal },
         });
       }
+      if (!nativeResultSeen) {
+        throw new BridgeError({
+          code: "harness_failed",
+          message: `${this.id} exited without a native completion result.`,
+          retryable: false,
+          details: { reason: "missing_native_result" },
+        });
+      }
       return {
         content: state.content.parts,
         artifacts: [],
@@ -394,14 +452,19 @@ export abstract class ProcessAdapter implements Adapter {
         observedIdentity: state.identity,
         ...(state.usage === undefined ? {} : { usage: state.usage }),
       };
+    } catch (error) {
+      // Every rejected run owns teardown, including malformed output, stream
+      // failures, and errors from event persistence or normalization.
+      await terminate();
+      throw error;
     } finally {
       lines?.close();
       context.signal.removeEventListener("abort", onAbort);
       if (terminationTimer !== undefined) {
         clearTimeout(terminationTimer);
       }
-      if (!child.killed && context.signal.aborted) {
-        terminate();
+      if (terminationStarted) {
+        await terminationPromise;
       }
     }
   }

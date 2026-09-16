@@ -7,8 +7,10 @@ import test from "node:test";
 import type { Adapter, AdapterRunContext, AdapterRunResult } from "../src/adapters/types.js";
 import type { RouteDescriptor } from "../src/contract.js";
 
+import { ClaudeAdapter } from "../src/adapters/claude.js";
 import { FakeAdapter } from "../src/adapters/fake.js";
 import { AdapterRegistry } from "../src/adapters/registry.js";
+import { applyUserModelCatalog } from "../src/model-catalog.js";
 
 class CountingAdapter implements Adapter {
   readonly id = "counting";
@@ -68,8 +70,10 @@ test("user model catalog adds aliases and canonical native model mappings", asyn
     const alias = routes.find((route) => route.model === "quick");
     const custom = routes.find((route) => route.model === "local");
     assert.equal(alias?.canonicalModel, "fake-echo");
+    assert.equal(alias?.nativeModel, "fake-echo");
     assert.equal(alias?.qualification.at(-1)?.qualificationId, "user-declared:fake:quick");
     assert.equal(custom?.canonicalModel, "fake-echo");
+    assert.equal(custom?.nativeModel, "fake-echo");
     assert.deepEqual(custom?.efforts, ["low"]);
 
     const resolved = await registry.resolve({
@@ -86,6 +90,7 @@ test("user model catalog adds aliases and canonical native model mappings", asyn
     });
     assert.equal(resolved.route.model, "quick");
     assert.equal(resolved.route.canonicalModel, "fake-echo");
+    assert.equal(resolved.route.nativeModel, "fake-echo");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -100,4 +105,20 @@ test("adapter route discovery is cached and can be refreshed", async () => {
   assert.equal(first[0]?.discoveredAt, second[0]?.discoveredAt);
   await registry.discover({ refresh: true });
   assert.equal(adapter.calls, 2);
+});
+
+test("user aliases preserve a native harness alias separately from its canonical hint", async () => {
+  const routes = await new ClaudeAdapter({
+    executable: process.execPath,
+    probe: {
+      readVersion: async () => "2.1.235 (Claude Code)",
+      checkAuthentication: async () => true,
+    },
+  }).discover();
+  const mapped = applyUserModelCatalog(routes, {
+    adapters: { claude: { aliases: { quick: "opus" } } },
+  });
+  const quick = mapped.find((route) => route.adapter === "claude" && route.model === "quick");
+  assert.equal(quick?.canonicalModel, "claude-opus-4-8");
+  assert.equal(quick?.nativeModel, "opus");
 });

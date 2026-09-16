@@ -14,7 +14,11 @@ Extend `ProcessAdapter` for a command-line harness that emits JSONL. Provide a
 manifest-backed `discover()`, a safe argument-array `command()`, and a
 `normalizeNative()` function. The base class owns stdin, stderr bounds,
 process-group cancellation, timeout grace, JSONL parsing, lifecycle events,
-and terminal error handling.
+and terminal error handling. A normalizer must mark a qualified native success
+event with `data.state: "native_result"`; a clean process exit without that
+marker is an incomplete failed invocation. Native failure markers should carry
+the adapter event's `failure` detail so the bridge preserves observed output
+and identity alongside the error.
 
 ## Manifest fields
 
@@ -32,10 +36,12 @@ and terminal error handling.
 
 Model entries also declare one canonical native model ID and optional request
 aliases. Discovery publishes one route for the canonical ID and one for each
-alias; resolution keeps the requested ID in `model` and passes that requested
-ID to the harness. `canonicalModel` remains an expected-resolution hint for
-route metadata; the harness may resolve an alias differently, so the observed
-runtime model is recorded separately from both values.
+alias; built-in native aliases such as `opus` remain in the requested
+`model` and are passed through to the harness. A user model catalog adds
+`nativeModel` to the route, so the declared native ID is passed to the
+harness while the requested alias remains in `model`. `canonicalModel` is an
+expected-resolution hint for route metadata; the observed runtime model is
+recorded separately from both values.
 
 Discovery records the absolute executable, observed version, authentication
 readiness, diagnostics, and a qualification record. Missing executables are
@@ -76,7 +82,9 @@ Every adapter should add:
    usage, effect, identity, and malformed output;
 3. fake-harness lifecycle scenarios for success, failure, timeout, cancellation,
    truncation, and process-tree teardown; and
-4. a policy-mapping table test for every supported and rejected control.
+4. a policy-mapping table test for every supported and rejected control; and
+5. process teardown tests proving malformed, incomplete, cancelled, and
+   timed-out streams do not leave descendants running.
 
 Run the shared suite with `pnpm check`. Do not test only happy-path text: an
 adapter that cannot distinguish an incomplete stream from success is not

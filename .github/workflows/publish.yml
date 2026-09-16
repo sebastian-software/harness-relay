@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: Run release-please
         id: release
-        uses: googleapis/release-please-action@0dfd8538845b8e92600d271a895a5372865d4062 # v5
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
@@ -82,7 +82,7 @@ jobs:
         with:
           # Always the release tag: from release-please on the push path, from
           # the operator on the manual path. Checkout fails on an unknown tag.
-          ref: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+          ref: refs/tags/${{ inputs.tag || needs.release-please.outputs.tag_name }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
@@ -94,13 +94,33 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: pnpm
 
+      - name: Verify release tag and package version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || needs.release-please.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.+-]+)?$ ]]; then
+            echo "::error::Release tag must be a SemVer tag such as v0.1.0; got ${RELEASE_TAG}."
+            exit 1
+          fi
+          package_version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
+          expected_tag="v${package_version}"
+          if [[ "$RELEASE_TAG" != "$expected_tag" ]]; then
+            echo "::error::Release tag ${RELEASE_TAG} does not match package.json version ${package_version}."
+            exit 1
+          fi
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Verify the release candidate
         run: pnpm check
 
+      - name: Set up npm for Trusted Publishing
+        # npm 11.5.1 is the minimum version that supports npm Trusted
+        # Publishing. Keep this pin deliberate so the publishing tool cannot
+        # change under a release.
+        run: npm install --global npm@11.5.1
+
       - name: Publish with npm provenance
-        # --no-git-checks: the tag is checked out detached, which pnpm would
-        # otherwise reject as "not on a branch".
-        run: pnpm publish --provenance --access public --no-git-checks
+        uses: sebastian-software/standards/.github/actions/publish-npm@8a2f798698f90d24b5989e8a3488bb3f96ddfb75 # v0.12.0

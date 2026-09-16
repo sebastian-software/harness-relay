@@ -129,7 +129,7 @@ function commandArgs(context: AdapterRunContext): readonly string[] {
     "stream-json",
     "--verbose",
     "--model",
-    context.route.model,
+    context.route.nativeModel ?? context.route.model,
     "--permission-mode",
     permissionMode(context),
   ];
@@ -417,6 +417,7 @@ export class ClaudeAdapter extends ProcessAdapter {
         }
       }
       if (text !== undefined) {
+        state.content.add(text);
         return {
           category: "output",
           content: [{ type: "text", text }],
@@ -427,7 +428,10 @@ export class ClaudeAdapter extends ProcessAdapter {
     }
     if (type === "result") {
       const text = typeof value.result === "string" ? value.result : undefined;
-      if (text !== undefined) {
+      const isError =
+        value.is_error === true ||
+        (typeof value.subtype === "string" && value.subtype.startsWith("error_"));
+      if (!isError && text !== undefined && text.trim() !== "") {
         state.content.setFinal(text);
       }
       const usage = usageFrom({
@@ -437,12 +441,13 @@ export class ClaudeAdapter extends ProcessAdapter {
         total_cost_usd: value.total_cost_usd,
         num_turns: value.num_turns,
       });
-      const isError =
-        value.is_error === true ||
-        (typeof value.subtype === "string" && value.subtype.startsWith("error_"));
+      const successMarker = !isError && text !== undefined && text.trim() !== "";
       return {
         category: usage === undefined ? "lifecycle" : "usage",
-        data: { state: "native_result", ...(usage === undefined ? {} : { usage: { ...usage } }) },
+        data: {
+          state: successMarker ? "native_result" : isError ? "native_failed" : "native_incomplete",
+          ...(usage === undefined ? {} : { usage: { ...usage } }),
+        },
         ...(usage === undefined ? {} : { usage }),
         ...(isError
           ? {

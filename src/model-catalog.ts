@@ -180,7 +180,7 @@ function userEvidence(
 function routeWithModel(
   route: RouteDescriptor,
   model: string,
-  nativeModel: string,
+  canonicalModel: string,
   catalog: undefined | UserModelDefinition,
   adapterId: string,
 ): RouteDescriptor {
@@ -188,13 +188,17 @@ function routeWithModel(
     ...route,
     routeId: `${route.adapter}:${model}`,
     model,
-    canonicalModel: nativeModel,
+    canonicalModel,
+    ...(catalog?.nativeModel === undefined ? {} : { nativeModel: catalog.nativeModel }),
     ...(catalog?.efforts === undefined ? {} : { efforts: catalog.efforts }),
     ...(catalog?.capabilities === undefined ? {} : { capabilities: catalog.capabilities }),
     ...(catalog?.interactionStrategies === undefined
       ? {}
       : { interactionStrategies: catalog.interactionStrategies }),
-    qualification: [...route.qualification, userEvidence(adapterId, model, nativeModel)],
+    qualification: [
+      ...route.qualification,
+      userEvidence(adapterId, model, catalog?.nativeModel ?? canonicalModel),
+    ],
   };
 }
 
@@ -218,7 +222,7 @@ export function applyUserModelCatalog(
             targetRoute,
             alias,
             targetRoute.canonicalModel ?? targetRoute.model,
-            undefined,
+            { nativeModel: targetRoute.nativeModel ?? targetRoute.model },
             adapterId,
           ),
         );

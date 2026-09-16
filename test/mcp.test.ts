@@ -20,6 +20,20 @@ function decoded(value: string | undefined): Record<string, unknown> {
   return JSON.parse(value) as Record<string, unknown>;
 }
 
+function textContent(value: unknown): string | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const entry = value.find((candidate): candidate is { type: "text"; text: string } => {
+    if (typeof candidate !== "object" || candidate === null || Array.isArray(candidate)) {
+      return false;
+    }
+    const record = candidate as Record<string, unknown>;
+    return record.type === "text" && typeof record.text === "string";
+  });
+  return entry?.text;
+}
+
 test("MCP initialize and tools/list expose the bridge contract", async () => {
   const server = new McpServer(async () => ({ ok: true }));
   const initialized = decoded(
@@ -108,6 +122,7 @@ test("MCP tools/call returns structured broker results and errors", async () => 
     ),
   );
   assert.equal((failure.result as { isError: boolean }).isError, true);
+  assert.equal("structuredContent" in (failure.result as Record<string, unknown>), false);
 });
 
 test("MCP notifications do not produce stdout responses", async () => {
@@ -159,6 +174,22 @@ test("MCP serves the broker contract to the official stdio client", async () => 
       arguments: {},
     });
     assert.ok(described.structuredContent);
+
+    const failed = await client.callTool({
+      name: "harness_relay_invocation_result",
+      arguments: { invocationId: "inv_missing_from_mcp_test" },
+    });
+    assert.equal(failed.isError, true);
+    const errorText = textContent(failed.content);
+    assert.ok(errorText);
+    const errorPayload = JSON.parse(errorText) as {
+      error?: { code?: unknown; message?: unknown };
+    };
+    assert.equal(errorPayload.error?.code, "invocation_not_found");
+    assert.equal(
+      errorPayload.error?.message,
+      "Invocation inv_missing_from_mcp_test was not found.",
+    );
 
     const started = await client.callTool({
       name: "harness_relay_invocation_start",

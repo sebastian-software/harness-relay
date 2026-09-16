@@ -81,6 +81,8 @@ export type RouteDescriptor = {
   readonly routeId: string;
   readonly executable?: string;
   readonly canonicalModel?: string;
+  /** Native model ID to pass when a user catalog declares an explicit mapping. */
+  readonly nativeModel?: string;
   readonly provider: string;
   readonly model: string;
   readonly efforts: readonly string[];
@@ -103,6 +105,8 @@ export type ResolvedRoute = {
   readonly routeId: string;
   readonly executable?: string;
   readonly canonicalModel?: string;
+  /** Native model ID to pass when a user catalog declares an explicit mapping. */
+  readonly nativeModel?: string;
   readonly adapter: string;
   readonly harnessVersion: string;
   readonly authenticationMode: string;

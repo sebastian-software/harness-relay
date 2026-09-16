@@ -794,6 +794,7 @@ export class Broker {
           invocationId,
           interrupted ? "interrupted" : timedOut ? "timed_out" : "cancelled",
           {
+            ...result,
             observedIdentity: result.observedIdentity,
             error: {
               code: interrupted ? "broker_shutdown" : timedOut ? "timed_out" : "cancelled",
@@ -829,8 +830,9 @@ export class Broker {
         );
       } else {
         const errorCode = error instanceof BridgeError ? error.code : "adapter_failed";
+        const partial = this.#partialResult(this.#requireRecord(invocationId), partialResult);
         await this.#complete(invocationId, "failed", {
-          observedIdentity: unverifiedIdentity(),
+          ...partial,
           error: { code: errorCode, message: messageFrom(error) },
         });
       }
@@ -903,6 +905,9 @@ export class Broker {
                         ...(event.inputRequest.toolName === undefined
                           ? {}
                           : { toolName: event.inputRequest.toolName }),
+                        ...(event.inputRequest.input === undefined
+                          ? {}
+                          : { input: event.inputRequest.input }),
                       }),
                 },
               }),

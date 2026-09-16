@@ -210,7 +210,6 @@ export class McpServer {
           response(request.id, {
             isError: true,
             content: [{ type: "text", text: JSON.stringify({ error: detail }) }],
-            structuredContent: { error: detail },
           }),
         );
       }
