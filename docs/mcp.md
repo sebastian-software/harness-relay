@@ -33,7 +33,14 @@ Only operations marked `implemented` in `system.describe` are advertised as
 MCP tools. Tool schemas are self-contained so hosts do not need to resolve
 cross-file `$ref` values.
 
+Successful calls return their operation result in `structuredContent`, which is
+validated against the advertised output schema. Failed calls set `isError` and
+return the structured bridge error as JSON text content. They omit
+`structuredContent` because an error object does not satisfy the successful
+operation's output schema; clients can parse the text content to retain the
+bridge error code, message, retryability, and details.
+
 The repository also carries an integration test that starts `harness-relay mcp
 serve` as a child process and drives it with the official MCP SDK client over
-stdio. It covers initialization, tool discovery, schema-backed calls, and a
-complete fake invocation lifecycle.
+stdio. It covers initialization, tool discovery, schema-backed calls, visible
+bridge errors, and a complete fake invocation lifecycle.

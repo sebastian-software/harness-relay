@@ -404,9 +404,11 @@ test("private broker directories reject world-writable paths", async () => {
 test("broker supervises the fake harness process across success and failure scenarios", async () => {
   const scenarios = [
     { model: "success", state: "succeeded" },
-    { model: "truncated", state: "succeeded" },
+    { model: "truncated", state: "failed", errorCode: "harness_failed" },
+    { model: "final-no-newline", state: "succeeded" },
     { model: "failure", state: "failed", errorCode: "harness_failed" },
     { model: "malformed", state: "failed", errorCode: "output_unparseable" },
+    { model: "malformed-after-output", state: "failed", errorCode: "output_unparseable" },
     { model: "timeout", state: "timed_out", timeoutMs: 100 },
     { model: "effects", state: "succeeded" },
   ] as const;
@@ -452,6 +454,14 @@ test("broker supervises the fake harness process across success and failure scen
         ).events.filter((event) => event.category === "effect");
         assert.ok(effectEvents.length > 0);
         assert.ok(effectEvents.every((event) => typeof event.data?.path === "string"));
+      }
+      if (scenario.model === "malformed-after-output") {
+        const outcome = terminal.outcome as {
+          content: ReadonlyArray<{ type: string; text?: string }>;
+          observedIdentity: { model: { value?: string } };
+        };
+        assert.deepEqual(outcome.content, [{ type: "text", text: "echo this" }]);
+        assert.equal(outcome.observedIdentity.model.value, "fake-echo");
       }
     } finally {
       await broker.close();

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { mkdir, rename, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
 import { join } from "node:path";
 
 const args = process.argv.slice(2);
@@ -28,12 +29,15 @@ if (
     "failure",
     "timeout",
     "malformed",
+    "malformed-after-output",
     "truncated",
+    "final-no-newline",
     "effects",
     "cancel",
     "identity-absent",
     "slow",
     "exit-before-read",
+    "leader-exit-descendant",
   ].includes(scenario)
 ) {
   console.error(`unknown scenario: ${scenario}`);
@@ -50,10 +54,27 @@ if (
   if (scenario === "malformed") {
     process.stdout.write("this is not json\n");
     process.exitCode = 0;
+  } else if (scenario === "malformed-after-output") {
+    emit({ type: "assistant", text });
+    process.stdout.write("this is not json\n");
+    setInterval(() => {}, 1000);
   } else if (scenario === "truncated") {
     process.stdout.write(JSON.stringify({ type: "assistant", text }));
     process.exitCode = 0;
+  } else if (scenario === "final-no-newline") {
+    process.stdout.write(`${JSON.stringify({ type: "assistant", text })}\n`);
+    process.stdout.write(JSON.stringify({ type: "result", status: "completed" }));
+    process.exitCode = 0;
   } else if (scenario === "exit-before-read") {
+    process.exit(0);
+  } else if (scenario === "leader-exit-descendant") {
+    const descendant = spawn(
+      process.execPath,
+      ["-e", "process.on('SIGINT', () => {}); setInterval(() => {}, 1000)"],
+      { stdio: "ignore" },
+    );
+    await writeFile(join(cwd, "fake-descendant.pid"), String(descendant.pid), "utf8");
+    emit({ type: "assistant", text });
     process.exit(0);
   } else if (scenario === "failure") {
     emit({ type: "diagnostic", message: "fake harness failure" });

@@ -16,12 +16,15 @@ const SCENARIOS = [
   "failure",
   "timeout",
   "malformed",
+  "malformed-after-output",
   "truncated",
+  "final-no-newline",
   "effects",
   "cancel",
   "identity-absent",
   "slow",
   "exit-before-read",
+  "leader-exit-descendant",
 ] as const;
 
 function route(model: string): RouteDescriptor {
@@ -179,10 +182,11 @@ export class FakeProcessAdapter extends ProcessAdapter {
     }
     if (type === "result") {
       const reportedUsage = usage(value.usage);
+      const complete = value.status === "completed";
       return {
         category: reportedUsage === undefined ? "lifecycle" : "usage",
         ...(reportedUsage === undefined ? {} : { usage: reportedUsage }),
-        data: { state: "native_result" },
+        data: { state: complete ? "native_result" : "native_incomplete" },
         native: value,
       };
     }

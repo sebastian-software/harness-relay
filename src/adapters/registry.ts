@@ -170,6 +170,9 @@ export class AdapterRegistry {
         ...(candidate.route.canonicalModel === undefined
           ? {}
           : { canonicalModel: candidate.route.canonicalModel }),
+        ...(candidate.route.nativeModel === undefined
+          ? {}
+          : { nativeModel: candidate.route.nativeModel }),
         adapter: candidate.route.adapter,
         harnessVersion: candidate.route.harnessVersion,
         authenticationMode: candidate.route.authenticationMode,

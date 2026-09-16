@@ -58,6 +58,12 @@ function resolvePolicy(request: StartInvocationRequest): PolicyResolution {
   if (request.requestedPolicy.commands === "deny") {
     unsupported.push("requestedPolicy.commands=deny");
   }
+  if (
+    request.requestedPolicy.filesystem === "read-only" &&
+    request.requestedPolicy.network === "allow"
+  ) {
+    unsupported.push("requestedPolicy.network=allow with filesystem=read-only");
+  }
   const controls: Array<Readonly<Record<string, JsonValue>>> = [
     {
       flag: "--sandbox",
@@ -198,7 +204,7 @@ export class CodexAdapter extends ProcessAdapter {
       "--json",
       "--ephemeral",
       "--model",
-      context.route.model,
+      context.route.nativeModel ?? context.route.model,
       "--sandbox",
       sandbox(context),
       "--cd",
@@ -209,6 +215,17 @@ export class CodexAdapter extends ProcessAdapter {
     ];
     if (context.route.effort !== undefined) {
       args.splice(-1, 0, "-c", `model_reasoning_effort=${reasoningEffort(context.route.effort)}`);
+    }
+    if (
+      context.request.requestedPolicy.network === "allow" ||
+      context.request.requestedPolicy.network === "deny"
+    ) {
+      args.splice(
+        -1,
+        0,
+        "-c",
+        `sandbox_workspace_write.network_access=${context.request.requestedPolicy.network === "allow"}`,
+      );
     }
     for (const directory of context.request.requestedPolicy.additionalDirectories ?? []) {
       args.splice(-1, 0, "--add-dir", directory);
@@ -269,6 +286,31 @@ export class CodexAdapter extends ProcessAdapter {
     }
     if (type === "turn.completed") {
       const usage = usageFrom(value.usage);
+      const status = typeof value.status === "string" ? value.status : undefined;
+      const error =
+        typeof value.error === "object" && value.error !== null && !Array.isArray(value.error)
+          ? (value.error as Record<string, unknown>)
+          : undefined;
+      if (status === "failed" || error !== undefined) {
+        return {
+          category: usage === undefined ? "diagnostic" : "usage",
+          data: { state: "native_failed", ...(usage === undefined ? {} : { usage: { ...usage } }) },
+          ...(usage === undefined ? {} : { usage }),
+          failure: {
+            code:
+              typeof error?.code === "string"
+                ? error.code
+                : typeof value.code === "string"
+                  ? value.code
+                  : "native_error",
+            message:
+              typeof error?.message === "string"
+                ? error.message
+                : "Codex reported an unsuccessful turn.",
+          },
+          native: value,
+        };
+      }
       return {
         category: usage === undefined ? "lifecycle" : "usage",
         data: { state: "native_result", ...(usage === undefined ? {} : { usage: { ...usage } }) },
@@ -276,8 +318,40 @@ export class CodexAdapter extends ProcessAdapter {
         native: value,
       };
     }
-    if (type.includes("error") || item?.type === "error") {
-      return { category: "diagnostic", native: value };
+    if (type === "error" || type === "turn.failed" || type === "turn.error") {
+      const error =
+        typeof value.error === "object" && value.error !== null && !Array.isArray(value.error)
+          ? (value.error as Record<string, unknown>)
+          : undefined;
+      return {
+        category: "diagnostic",
+        data: { state: "native_failed" },
+        failure: {
+          code:
+            typeof error?.code === "string"
+              ? error.code
+              : typeof value.code === "string"
+                ? value.code
+                : type,
+          message:
+            typeof error?.message === "string"
+              ? error.message
+              : typeof value.message === "string"
+                ? value.message
+                : "Codex reported an unsuccessful turn.",
+        },
+        native: value,
+      };
+    }
+    if (item?.type === "error") {
+      return {
+        category: "diagnostic",
+        data: {
+          phase: "item_error",
+          ...(typeof item.message === "string" ? { message: item.message } : {}),
+        },
+        native: value,
+      };
     }
     return { category: "activity", data: { phase: type }, native: value };
   }

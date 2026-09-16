@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 
-import type { AdapterEvent, AdapterRunContext } from "../src/adapters/types.js";
+import type { AdapterEvent, AdapterRunContext, AdapterRunResult } from "../src/adapters/types.js";
 import type {
   JsonValue,
   ObservedIdentity,
@@ -14,6 +17,7 @@ import type {
 import { CLAUDE_SESSION_ENVIRONMENT_DENY_LIST, ClaudeAdapter } from "../src/adapters/claude.js";
 import { CodexAdapter } from "../src/adapters/codex.js";
 import { parseVersion, satisfiesVersionRange } from "../src/adapters/discovery.js";
+import { FakeProcessAdapter } from "../src/adapters/fake-process.js";
 import { type CommandSpec, ContentAccumulator, ProcessAdapter } from "../src/adapters/process.js";
 
 const route = (adapter: string, executable: string): ResolvedRoute => ({
@@ -49,7 +53,7 @@ class TestProcessAdapter extends ProcessAdapter {
       executable: process.execPath,
       args: [
         "-e",
-        "console.log(JSON.stringify({type:'assistant',message:{content:[{type:'text',text:'hello'}]}}))",
+        "console.log(JSON.stringify({type:'assistant',message:{content:[{type:'text',text:'hello'}]}})); console.log(JSON.stringify({type:'result',status:'completed'}))",
       ],
     };
   }
@@ -58,6 +62,9 @@ class TestProcessAdapter extends ProcessAdapter {
     value: Record<string, JsonValue>,
     state: { identity: ObservedIdentity; content: { add: (text: string) => void } },
   ): AdapterEvent {
+    if (value.type === "result") {
+      return { category: "lifecycle", data: { state: "native_result" }, native: value };
+    }
     const text =
       typeof value.message === "object" &&
       value.message !== null &&
@@ -86,7 +93,7 @@ class StdinProcessAdapter extends ProcessAdapter {
       executable: process.execPath,
       args: [
         "-e",
-        "process.stdin.setEncoding('utf8'); let s=''; process.stdin.on('data', c => s += c); process.stdin.on('end', () => console.log(JSON.stringify({type:'assistant',message:{content:[{type:'text',text:s}]},env:process.env.TEST_DENIED ?? null})))",
+        "process.stdin.setEncoding('utf8'); let s=''; process.stdin.on('data', c => s += c); process.stdin.on('end', () => { console.log(JSON.stringify({type:'assistant',message:{content:[{type:'text',text:s}]},env:process.env.TEST_DENIED ?? null})); console.log(JSON.stringify({type:'result',status:'completed'})); })",
       ],
       stdin: "prompt from stdin",
       env: { TEST_DENIED: "must-not-leak" },
@@ -98,6 +105,9 @@ class StdinProcessAdapter extends ProcessAdapter {
     value: Record<string, JsonValue>,
     state: { identity: ObservedIdentity; content: { add: (text: string) => void } },
   ): AdapterEvent {
+    if (value.type === "result") {
+      return { category: "lifecycle", data: { state: "native_result" }, native: value };
+    }
     const message = value.message as { content?: ReadonlyArray<{ text?: unknown }> };
     const text = typeof message.content?.[0]?.text === "string" ? message.content[0].text : "";
     state.content.add(text);
@@ -117,7 +127,7 @@ class EnvironmentEchoProcessAdapter extends ProcessAdapter {
       executable: process.execPath,
       args: [
         "-e",
-        "console.log(JSON.stringify({type:'assistant',seen:Object.keys(process.env).filter(key => key.startsWith('HARNESS_RELAY_') || key.startsWith('AGENT_BRIDGE_')).sort(),control:process.env.CONTROL_MARKER ?? null}))",
+        "console.log(JSON.stringify({type:'assistant',seen:Object.keys(process.env).filter(key => key.startsWith('HARNESS_RELAY_') || key.startsWith('AGENT_BRIDGE_')).sort(),control:process.env.CONTROL_MARKER ?? null})); console.log(JSON.stringify({type:'result',status:'completed'}))",
       ],
     };
   }
@@ -126,6 +136,9 @@ class EnvironmentEchoProcessAdapter extends ProcessAdapter {
     value: Record<string, JsonValue>,
     state: { identity: ObservedIdentity; content: { add: (text: string) => void } },
   ): AdapterEvent {
+    if (value.type === "result") {
+      return { category: "lifecycle", data: { state: "native_result" }, native: value };
+    }
     const seen = Array.isArray(value.seen) ? value.seen.join(",") : "";
     state.content.add(seen);
     return { category: "output", content: [{ type: "text", text: seen }], native: value };
@@ -179,7 +192,7 @@ class InteractiveProcessAdapter extends ProcessAdapter {
     }
     if (value.type === "result") {
       state.content.setFinal("approved");
-      return { category: "lifecycle", native: value };
+      return { category: "lifecycle", data: { state: "native_result" }, native: value };
     }
     return undefined;
   }
@@ -195,6 +208,18 @@ class InspectableClaudeAdapter extends ClaudeAdapter {
 
   commandFor(context: AdapterRunContext): CommandSpec {
     return this.command(context);
+  }
+}
+
+class FailingClaudeProcessAdapter extends ClaudeAdapter {
+  protected command(): CommandSpec {
+    return {
+      executable: process.execPath,
+      args: [
+        "-e",
+        "console.log(JSON.stringify({type:'assistant',message:{content:[{type:'text',text:'partial answer'}]}})); console.log(JSON.stringify({type:'result',is_error:true,subtype:'error_max_turns',result:'native failure'}))",
+      ],
+    };
   }
 }
 
@@ -298,7 +323,7 @@ test("process adapter normalizes JSONL output and preserves the absolute executa
     },
   });
   assert.deepEqual(result.content, [{ type: "text", text: "hello" }]);
-  assert.equal(events.at(-1)?.category, "output");
+  assert.ok(events.some((event) => event.category === "output"));
 });
 
 test("process adapter keeps the output of a harness that exits before the first event is persisted", async () => {
@@ -335,7 +360,8 @@ test("process adapter sends prompt on stdin and filters denied environment varia
   assert.equal(started?.data?.phase, "process_started");
   assert.equal(started?.native, undefined);
   assert.deepEqual(started?.data?.deniedEnvironment, ["TEST_DENIED"]);
-  assert.equal(events.at(-1)?.native?.env, null);
+  const output = events.find((event) => event.category === "output");
+  assert.equal(output?.native?.env, null);
 });
 
 test("process adapter keeps bridge-internal variables, including stale ones, out of the harness", async () => {
@@ -414,6 +440,30 @@ test("Claude keeps the final result once and captures reported usage", () => {
   assert.equal(result?.usage?.inputTokens, 3);
 });
 
+test("Claude preserves assistant content when the native result fails", async () => {
+  const adapter = new FailingClaudeProcessAdapter();
+  let partial: Partial<AdapterRunResult> = {};
+  await assert.rejects(
+    adapter.run({
+      invocationId: "inv_claude_failed_result",
+      request: request(process.cwd()),
+      route: {
+        ...route("claude", process.execPath),
+        provider: "anthropic",
+        model: "opus",
+      },
+      signal: new AbortController().signal,
+      async emit() {},
+      reportPartial(result) {
+        partial = result;
+      },
+    }),
+    (error: unknown) =>
+      error instanceof Error && "code" in error && error.code === "harness_failed",
+  );
+  assert.deepEqual(partial.content, [{ type: "text", text: "partial answer" }]);
+});
+
 test("Claude confirms file effects only from successful tool results", () => {
   const adapter = new InspectableClaudeAdapter();
   const state = nativeState();
@@ -478,7 +528,12 @@ test("Claude maps native permission requests to an input request", () => {
     {
       type: "control_request",
       request_id: "req_123",
-      request: { subtype: "can_use_tool", tool_name: "Bash", message: "Run the command?" },
+      request: {
+        subtype: "can_use_tool",
+        tool_name: "Bash",
+        message: "Run the command?",
+        input: { command: "pwd" },
+      },
     },
     nativeState(),
   );
@@ -488,6 +543,7 @@ test("Claude maps native permission requests to an input request", () => {
     kind: "permission",
     prompt: "Run the command?",
     toolName: "Bash",
+    input: { command: "pwd" },
   });
 });
 
@@ -517,7 +573,7 @@ test("Claude orchestrator mode delegates permission prompts and closes stdin aft
   assert.deepEqual(command.envDenyList, CLAUDE_SESSION_ENVIRONMENT_DENY_LIST);
 });
 
-test("Claude and Codex pass requested model aliases through to the harness", () => {
+test("Claude and Codex pass native aliases through to the harness", () => {
   const claude = new InspectableClaudeAdapter({ executable: process.execPath });
   const claudeCommand = claude.commandFor({
     invocationId: "inv_claude_alias",
@@ -533,7 +589,7 @@ test("Claude and Codex pass requested model aliases through to the harness", () 
   assert.equal(claudeCommand.args[claudeCommand.args.indexOf("--model") + 1], "opus");
 
   const codex = new InspectableCodexAdapter();
-  const codexCommand = codex.commandFor({
+  const codexAliasCommand = codex.commandFor({
     invocationId: "inv_codex_alias",
     request: request(process.cwd()),
     route: {
@@ -544,7 +600,44 @@ test("Claude and Codex pass requested model aliases through to the harness", () 
     signal: new AbortController().signal,
     async emit() {},
   });
-  assert.equal(codexCommand.args[codexCommand.args.indexOf("--model") + 1], "gpt-5-codex");
+  assert.equal(
+    codexAliasCommand.args[codexAliasCommand.args.indexOf("--model") + 1],
+    "gpt-5-codex",
+  );
+
+  const codexCatalogCommand = codex.commandFor({
+    invocationId: "inv_codex_catalog_model",
+    request: request(process.cwd()),
+    route: {
+      ...route("codex", process.execPath),
+      model: "local",
+      canonicalModel: "gpt-5.3-codex",
+      nativeModel: "gpt-5.3-codex",
+    },
+    signal: new AbortController().signal,
+    async emit() {},
+  });
+  assert.equal(
+    codexCatalogCommand.args[codexCatalogCommand.args.indexOf("--model") + 1],
+    "gpt-5.3-codex",
+  );
+
+  const claudeCatalogCommand = claude.commandFor({
+    invocationId: "inv_claude_catalog_model",
+    request: request(process.cwd()),
+    route: {
+      ...route("claude", process.execPath),
+      model: "local",
+      canonicalModel: "claude-opus-4-8",
+      nativeModel: "claude-opus-4-8",
+    },
+    signal: new AbortController().signal,
+    async emit() {},
+  });
+  assert.equal(
+    claudeCatalogCommand.args[claudeCatalogCommand.args.indexOf("--model") + 1],
+    "claude-opus-4-8",
+  );
 });
 
 test("Codex excludes reasoning from answer content and reports file effects", () => {
@@ -567,6 +660,106 @@ test("Codex excludes reasoning from answer content and reports file effects", ()
   assert.equal(effect?.effects?.[0]?.evidence, "harness-reported");
   assert.deepEqual(state.content.parts, [{ type: "text", text: "answer" }]);
   assert.equal(answer?.content?.[0]?.type, "text");
+});
+
+test("Codex marks failed terminal events as harness failures", () => {
+  const adapter = new InspectableCodexAdapter();
+  const failed = adapter.normalize(
+    { type: "turn.failed", error: { code: "rate_limit", message: "Try again later." } },
+    nativeState(),
+  );
+  assert.equal(failed?.category, "diagnostic");
+  assert.deepEqual(failed?.failure, { code: "rate_limit", message: "Try again later." });
+
+  const error = adapter.normalize(
+    { type: "error", code: "invalid_request", message: "Bad request." },
+    nativeState(),
+  );
+  assert.deepEqual(error?.failure, { code: "invalid_request", message: "Bad request." });
+
+  const adapterState = nativeState();
+  const itemError = adapter.normalize(
+    { type: "item.completed", item: { type: "error", message: "A tool failed." } },
+    adapterState,
+  );
+  assert.equal(itemError?.category, "diagnostic");
+  assert.equal(itemError?.failure, undefined);
+  const completed = adapter.normalize({ type: "turn.completed" }, adapterState);
+  assert.equal(completed?.data?.state, "native_result");
+});
+
+test("ProcessAdapter rejects a clean exit without a native completion marker", async () => {
+  const events: AdapterEvent[] = [];
+  class IncompleteAdapter extends TestProcessAdapter {
+    protected command(_context: AdapterRunContext): CommandSpec {
+      return {
+        executable: process.execPath,
+        args: ["-e", "console.log(JSON.stringify({type:'assistant',text:'partial'}))"],
+      };
+    }
+  }
+  await assert.rejects(
+    new IncompleteAdapter().run({
+      invocationId: "inv_incomplete",
+      request: request(process.cwd()),
+      route: route("test-process", process.execPath),
+      signal: new AbortController().signal,
+      async emit(event) {
+        events.push(event);
+      },
+      terminationGraceMs: 25,
+    }),
+    (error: unknown) =>
+      error instanceof Error &&
+      "code" in error &&
+      error.code === "harness_failed" &&
+      "details" in error &&
+      (error.details as { reason?: string }).reason === "missing_native_result",
+  );
+  assert.ok(events.some((event) => event.category === "output"));
+});
+
+test("ProcessAdapter force-kills descendants after the leader exits on a failed stream", async () => {
+  const root = await mkdtemp(join(tmpdir(), "harness-relay-descendant-"));
+  try {
+    const adapter = new FakeProcessAdapter();
+    await assert.rejects(
+      adapter.run({
+        invocationId: "inv_descendant",
+        request: {
+          ...request(root),
+          selector: {
+            provider: "harness-relay",
+            model: "leader-exit-descendant",
+            requiredCapabilities: [],
+          },
+        },
+        route: {
+          ...route("fake-process", process.execPath),
+          model: "leader-exit-descendant",
+        },
+        signal: new AbortController().signal,
+        terminationGraceMs: 25,
+        async emit() {},
+      }),
+      (error: unknown) =>
+        error instanceof Error && "code" in error && error.code === "harness_failed",
+    );
+    const pid = Number(await readFile(join(root, "fake-descendant.pid"), "utf8"));
+    assert.ok(Number.isInteger(pid) && pid > 0);
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      try {
+        process.kill(pid, 0);
+      } catch (error) {
+        assert.equal((error as NodeJS.ErrnoException).code, "ESRCH");
+        return;
+      }
+      await delay(5);
+    }
+    assert.fail(`Descendant process ${pid} remained alive after adapter teardown.`);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("version qualification accepts ranges instead of only a major number", () => {
@@ -651,4 +844,48 @@ test("policy resolution rejects unsupported fields and records exact controls", 
   });
   assert.ok(command.args.includes("model_reasoning_effort=xhigh"));
   assert.equal(command.stdin, "hello");
+
+  const networkAllowed = codex.commandFor({
+    invocationId: "inv_network_allow",
+    request: {
+      ...request(process.cwd()),
+      requestedPolicy: {
+        minimumAssurance: "none",
+        filesystem: "workspace-write",
+        network: "allow",
+      },
+    },
+    route: { ...route("codex", process.execPath) },
+    signal: new AbortController().signal,
+    async emit() {},
+  });
+  assert.ok(networkAllowed.args.includes("sandbox_workspace_write.network_access=true"));
+
+  const networkDenied = codex.commandFor({
+    invocationId: "inv_network_deny",
+    request: {
+      ...request(process.cwd()),
+      requestedPolicy: { minimumAssurance: "none", filesystem: "workspace-write", network: "deny" },
+    },
+    route: { ...route("codex", process.execPath) },
+    signal: new AbortController().signal,
+    async emit() {},
+  });
+  assert.ok(networkDenied.args.includes("sandbox_workspace_write.network_access=false"));
+
+  const readOnlyNetworkAllowed = codex.resolvePolicy(
+    {
+      ...request(process.cwd()),
+      requestedPolicy: { minimumAssurance: "none", filesystem: "read-only", network: "allow" },
+    },
+    {
+      ...claudeRoute,
+      routeId: "codex:test-read-only",
+      provider: "openai",
+      model: "gpt-5.5",
+      via: "codex",
+      adapter: "codex",
+    },
+  );
+  assert.equal(readOnlyNetworkAllowed.supported, false);
 });
