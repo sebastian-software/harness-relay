@@ -44,13 +44,11 @@ typecheck, build, tests) for iterating locally. The tests run from the compiled
 output, so `pnpm test` builds first — never run `node --test` against a stale
 `dist`.
 
-CI adds two checks that are not part of `pnpm check`: `standards check` from
-[`@sebastian-software/standards`](https://github.com/sebastian-software/standards),
-which fails on drift in managed files, and a conventional pull-request title
-check, because release-please reads the squashed title. The standards CLI is a
-pinned, exact devDependency, so CI runs the version the lockfile records and you
-can run the same one locally with `pnpm exec standards check`. Never hand-edit a
-managed file such as `.oxfmtrc.json`; run `pnpm exec standards apply` instead.
+CI also checks conventional pull-request titles because release-please reads the
+squashed title. Tooling configuration belongs to this repository; run the same
+native gate after changing formatter or lint settings. Shared infrastructure
+guidance lives in [project-infra](https://github.com/sebastian-software/project-infra),
+and alignment is reviewed in pull requests.
 
 ## Running against the fake harnesses
 

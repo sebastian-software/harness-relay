@@ -123,4 +123,4 @@ jobs:
         run: npm install --global npm@11.5.1
 
       - name: Publish with npm provenance
-        uses: sebastian-software/standards/.github/actions/publish-npm@8a2f798698f90d24b5989e8a3488bb3f96ddfb75 # v0.12.0
+        uses: sebastian-software/project-infra/.github/actions/publish-npm@c97d8db475ce5abb7e7ab7b0ac22e249346b9fab # v0.3.0

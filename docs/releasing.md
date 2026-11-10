@@ -113,10 +113,10 @@ output is `0.1.0`. Then install each skill from the versioned public source and
 confirm the three documented skill directories are discoverable. These checks
 establish public installability; a local tarball check alone does not.
 
-The shared [Release Please reference](https://github.com/sebastian-software/standards/tree/main/reference/release-please)
-provides the single-product release pattern. The pinned Release Please action
+The shared [CI and release guidance](https://github.com/sebastian-software/project-infra/blob/main/skills/project-infra/references/ci-and-releases.md)
+describes the single-product release pattern. The pinned Release Please action
 uses the `release-please` 17.6.0 implementation, which supports the explicit
-`initial-version` setting. The npm publisher is pinned to the
-`standards-v0.12.0` `publish-npm` action. The repository does not verify the
-external npm Trusted Publisher or environment configuration; the owner must
-complete and validate that setup before publishing.
+`initial-version` setting. The npm publisher uses project-infra's `publish-npm`
+action at v0.3.0; its implementation matches the previously pinned publisher.
+The repository does not verify the external npm Trusted Publisher or environment
+configuration; the owner must complete and validate that setup before publishing.
