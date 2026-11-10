@@ -35,34 +35,6 @@ jobs:
       - name: Verify every workflow action is pinned by commit SHA
         run: node scripts/check-workflow-pins.mjs
 
-  standards:
-    name: Org standards
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Set up pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          # The standards CLI declares node >=24; 22 only warns, but the
-          # drift lane is repository-level and has no reason to run older.
-          node-version: 24.x
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: "Guard: agent step not yet completed for this PR"
-        run: test ! -f .standards/pending.json
-      # `@sebastian-software/standards` is a pinned, exact devDependency, so
-      # this runs the version the lockfile records and CI executes nothing that
-      # was not reviewed in a pull request. Renovate's `:standards` preset
-      # raises the pin; the drift it then reports is applied in that same pull
-      # request.
-      - name: Check org standards
-        run: pnpm exec standards check
-
   check:
     name: Node ${{ matrix.node }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

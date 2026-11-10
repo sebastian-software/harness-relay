@@ -173,9 +173,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.31.0
         version: 1.31.0(supports-color@9.4.0)(zod@4.5.4)
-      '@sebastian-software/standards':
-        specifier: 0.13.0
-        version: 0.13.0
       '@types/node':
         specifier: 24.19.0
         version: 24.19.0
@@ -1297,11 +1294,6 @@ packages:
 
   '@protobufjs/utf8@1.1.2':
     resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
-
-  '@sebastian-software/standards@0.13.0':
-    resolution: {integrity: sha512-jBK0S1NeaKgBbrzfMP1CnSwIigILFPEbexHt7gldrZdiOGDLp6MRuNgkVLcQ4NFW4e0Ov0KsQOuLTNk0TGXKxg==}
-    engines: {node: '>=24.0.0'}
-    hasBin: true
 
   '@silvia-odwyer/photon-node@0.3.4':
     resolution: {integrity: sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA==}
@@ -5177,8 +5169,6 @@ snapshots:
 
   '@protobufjs/utf8@1.1.2':
     optional: true
-
-  '@sebastian-software/standards@0.13.0': {}
 
   '@silvia-odwyer/photon-node@0.3.4':
     optional: true
