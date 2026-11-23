@@ -44,7 +44,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         # 22.x is the engines floor, 24.x the version the release publishes on.
-        node: ["22.x", "24.x"]
+        node: ["22.x", "24.x", "26.x"]
 
     steps:
       - name: Check out repository
